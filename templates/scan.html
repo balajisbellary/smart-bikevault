@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}QR Scanner - BikeVault{% endblock %}
+
+{% block content %}
+
+<style>
+    .scanner-container {
+        max-width: 600px;
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    #scanner {
+        width: 100%;
+        max-width: 500px;
+        height: 500px;
+        border: 3px solid var(--bosch-red);
+        border-radius: var(--radius);
+        margin: 20px auto;
+        background: #000;
+    }
+
+    .scanner-info {
+        background: #dbeafe;
+        color: #0c4a6e;
+        padding: 16px;
+        border-radius: var(--radius);
+        margin-bottom: 20px;
+        border-left: 4px solid #0ea5e9;
+    }
+
+    .vehicle-details {
+        background: white;
+        border-radius: var(--radius);
+        padding: 24px;
+        box-shadow: var(--shadow);
+        margin-top: 20px;
+        display: none;
+    }
+
+    .detail-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .detail-item {
+        text-align: left;
+        padding: 12px;
+        background: var(--bosch-gray);
+        border-radius: 8px;
+        border-left: 4px solid var(--bosch-red);
+    }
+
+    .detail-label {
+        font-size: 12px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .detail-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--bosch-dark);
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-testing {
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        color: #0c4a6e;
+    }
+
+    .status-returned {
+        background: linear-gradient(135deg, #d1d5db, #9ca3af);
+        color: white;
+    }
+
+    .btn-close-scanner {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 700;
+        margin-top: 16px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-close-scanner:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+    }
+
+    .error-message {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 16px;
+        border-radius: var(--radius);
+        border-left: 4px solid var(--bosch-red);
+        display: none;
+        margin-top: 20px;
+    }
+</style>
+
+<div class="scanner-container">
+    <div class="section-title">
+        📱 QR Code Scanner
+    </div>
+
+    <div class="scanner-info">
+        📌 Point your camera at the QR code on the vehicle to scan and view all details
+    </div>
+
+    <!-- SCANNER -->
+    <div id="scanner"></div>
+
+    <!-- ERROR MESSAGE -->
+    <div class="error-message" id="errorMessage"></div>
+
+    <!-- VEHICLE DETAILS -->
+    <div class="vehicle-details" id="vehicleDetails">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+            <h3 style="margin: 0;" id="vehicleName">Vehicle Name</h3>
+            <span class="status-badge" id="vehicleStatus">IN TESTING</span>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-item">
+                <div class="detail-label">🆔 RC Number</div>
+                <div class="detail-value" id="detailRC">-</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">🔗 Chassis Number</div>
+                <div class="detail-value" id="detailChassis">-</div>
+            </div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-item">
+                <div class="detail-label">🛠️ Engine Number</div>
+                <div class="detail-value" id="detailEngine">-</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">👤 Owner</div>
+                <div class="detail-value" id="detailOwner">-</div>
+            </div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-item">
+                <div class="detail-label">📅 Received On</div>
+                <div class="detail-value" id="detailReceived">-</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">🛢️ Fuel Type</div>
+                <div class="detail-value" id="detailFuel">-</div>
+            </div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-item">
+                <div class="detail-label">⚙️ Engine CC</div>
+                <div class="detail-value" id="detailCC">-</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">🪛 Gears</div>
+                <div class="detail-value" id="detailGears">-</div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <a href="" id="viewFullDetailsBtn" class="btn-primary-bosch" style="flex: 1;">👁️ View Full Details</a>
+            <button type="button" class="btn-close-scanner" onclick="resetScanner()">🔄 Scan Again</button>
+        </div>
+    </div>
+</div>
+
+<!-- Include Html5-QRCode library -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+    let html5QrcodeScanner;
+
+    function onScanSuccess(decodedText, decodedResult) {
+        console.log('QR Code detected:', decodedText);
+        
+        // Extract vehicle ID from URL
+        const vehicleId = decodedText.split('/').pop();
+        console.log('Extracted Vehicle ID:', vehicleId);
+        
+        // Stop scanner
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear();
+        }
+
+        // Fetch vehicle details
+        fetch(`/api/vehicle/${vehicleId}`)
+            .then(response => {
+                console.log('API Response Status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: Vehicle not found`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Vehicle Data:', data);
+                displayVehicleDetails(data);
+            })
+            .catch(error => {
+                console.error('Error fetching vehicle:', error);
+                showError('❌ Vehicle not found or invalid QR code. Check console for details.');
+                setTimeout(() => resetScanner(), 3000);
+            });
+    }
+
+    function onScanFailure(error) {
+        // Handle scan failure (usually just scanning errors, not fatal)
+        console.warn('Scan failure:', error);
+    }
+
+    function displayVehicleDetails(vehicle) {
+        console.log('Displaying vehicle details for:', vehicle.name);
+        
+        document.getElementById('vehicleName').textContent = vehicle.name || 'Unknown';
+        document.getElementById('detailRC').textContent = vehicle.rc || '-';
+        document.getElementById('detailChassis').textContent = vehicle.chassis || '-';
+        document.getElementById('detailEngine').textContent = vehicle.engine || 'N/A';
+        document.getElementById('detailOwner').textContent = vehicle.owner || 'N/A';
+        document.getElementById('detailReceived').textContent = vehicle.received_on || '-';
+        document.getElementById('detailFuel').textContent = vehicle.fuel || 'N/A';
+        document.getElementById('detailCC').textContent = vehicle.cc ? vehicle.cc + ' cc' : 'N/A';
+        document.getElementById('detailGears').textContent = vehicle.gears || 'N/A';
+
+        // Set status badge
+        const statusBadge = document.getElementById('vehicleStatus');
+        if (vehicle.status === 'In Testing') {
+            statusBadge.className = 'status-badge status-testing';
+            statusBadge.textContent = '🔄 IN TESTING';
+        } else {
+            statusBadge.className = 'status-badge status-returned';
+            statusBadge.textContent = '✓ RETURNED';
+        }
+
+        // Set view details button link
+        document.getElementById('viewFullDetailsBtn').href = `/vehicle/${vehicle.id}`;
+
+        // Show details
+        document.getElementById('vehicleDetails').style.display = 'block';
+        document.getElementById('errorMessage').style.display = 'none';
+        document.getElementById('scanner').style.display = 'none';
+        
+        console.log('Vehicle details displayed successfully');
+    }
+
+    function showError(message) {
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+    }
+
+    function resetScanner() {
+        document.getElementById('vehicleDetails').style.display = 'none';
+        document.getElementById('errorMessage').style.display = 'none';
+        document.getElementById('scanner').style.display = 'block';
+        
+        // Restart scanner
+        startScanner();
+    }
+
+    function startScanner() {
+        try {
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "scanner",
+                { 
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    rememberLastUsedCamera: true,
+                    aspectRatio: 1
+                },
+                false
+            );
+
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            console.log('Scanner started successfully');
+        } catch (error) {
+            console.error('Error starting scanner:', error);
+            showError('❌ Failed to start camera scanner. Make sure you have enabled camera permissions.');
+        }
+    }
+
+    // Start scanner on page load
+    window.addEventListener('load', () => {
+        console.log('Page loaded, starting scanner...');
+        startScanner();
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear();
+        }
+    });
+</script>
+
+{% endblock %}
+
+<!-- Add to vehicle.html tab content -->
+        <div class="card">
+            <h3>📱 QR Code</h3>
+            <div style="text-align: center; padding: 20px;">
+                <p style="color: #6b7280; margin-bottom: 16px;">Scan this code to view vehicle details</p>
+                <div style="background: var(--bosch-gray); padding: 20px; border-radius: 12px; display: inline-block;">
+                    <img src="{{ url_for('vehicle_qr', vehicle_id=v.id) }}" alt="QR Code" style="max-width: 250px; border-radius: 8px;">
+                </div>
+                <p style="color: #6b7280; font-size: 12px; margin-top: 16px;">Vehicle ID: {{ v.id }}</p>
+            </div>
+        </div>
+
+<!-- QR Code Generation Route -->
+@app.route('/vehicle_qr/<int:vehicle_id>')
+def vehicle_qr(vehicle_id):
+    vehicle = Vehicle.query.get_or_404(vehicle_id)
+    
+    # Create QR code
+    qr_data = f"{request.host_url.rstrip('/')}vehicle/{vehicle_id}"
+    
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=10,
+        border=2,
+    )
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    img_io = BytesIO()
+    img.save(img_io, 'PNG')
+    img_io.seek(0)
+    
+    return send_file(img_io, mimetype='image/png')

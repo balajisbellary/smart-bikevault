@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - BikeVault{% endblock %}
+
+{% block content %}
+
+<!-- PAGE HEADER -->
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900">📊 Dashboard</h1>
+    <p class="text-slate-600 text-sm mt-1">Vehicle testing overview and management</p>
+</div>
+
+<!-- STATS CARDS -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- TOTAL VEHICLES -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:shadow-md transition cursor-pointer" onclick="filterByStatus('')">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">Total Vehicles</p>
+                <p class="text-4xl font-bold text-bosch-dark mt-2">{{ total }}</p>
+            </div>
+            <span class="text-5xl opacity-10">🚗</span>
+        </div>
+    </div>
+
+    <!-- IN TESTING -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:shadow-md transition cursor-pointer" onclick="filterByStatus('In Testing')">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">In Testing</p>
+                <p class="text-4xl font-bold text-blue-600 mt-2">{{ testing }}</p>
+            </div>
+            <span class="text-5xl opacity-10">⚙️</span>
+        </div>
+    </div>
+
+    <!-- TEST COMPLETED -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:shadow-md transition cursor-pointer" onclick="filterByStatus('Test Completed')">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">Test Completed</p>
+                <p class="text-4xl font-bold text-amber-600 mt-2">{{ test_completed }}</p>
+            </div>
+            <span class="text-5xl opacity-10">✓</span>
+        </div>
+    </div>
+
+    <!-- RETURNED -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 hover:shadow-md transition cursor-pointer" onclick="filterByStatus('Returned')">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">Returned</p>
+                <p class="text-4xl font-bold text-green-600 mt-2">{{ returned }}</p>
+            </div>
+            <span class="text-5xl opacity-10">↩️</span>
+        </div>
+    </div>
+</div>
+
+<!-- SEARCH & ACTION BAR -->
+<div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-8">
+    <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <form method="GET" class="flex-1 w-full flex gap-3" id="searchForm">
+            <input 
+                type="text" 
+                name="search" 
+                id="searchInput"
+                class="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-bosch-red focus:ring-1 focus:ring-bosch-red text-sm"
+                placeholder="Search by vehicle name, RC, chassis..."
+                value="{{ request.args.get('search', '') }}"
+            >
+            <button type="submit" class="px-6 py-2 bg-slate-800 text-white font-semibold rounded-lg hover:bg-slate-900 transition text-sm">
+                🔍 Search
+            </button>
+            {% if request.args.get('search') %}
+            <a href="/dashboard" class="px-6 py-2 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition text-sm text-center">
+                🚗 Bike List
+            </a>
+            {% endif %}
+        </form>
+        <a href="/receive" class="w-full sm:w-auto px-6 py-2 bg-bosch-red text-white font-semibold rounded-lg hover:bg-red-700 transition text-sm text-center">
+            + Add Vehicle
+        </a>
+    </div>
+</div>
+
+<script>
+    // Auto-clear search when backspace empties the field
+    const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            // If search field is empty, go back to full bike list
+            if (this.value.trim() === '') {
+                window.location.href = '/dashboard';
+            }
+        });
+    }
+</script>
+
+<!-- VEHICLES TABLE -->
+<div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+    <table class="w-full">
+        <thead class="bg-slate-50 border-b border-slate-200">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">#</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Vehicle Name</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">RC Number</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Chassis</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Owner</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Received</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-slate-700 uppercase tracking-wider">Action</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200">
+            {% for v in vehicles %}
+            <tr class="hover:bg-slate-50 transition cursor-pointer" onclick="window.location.href='/vehicle/{{ v.id }}'">
+                <td class="px-6 py-4 text-sm text-slate-700">{{ loop.index }}</td>
+                <td class="px-6 py-4 text-sm font-semibold text-bosch-red">{{ v.name }}</td>
+                <td class="px-6 py-4 text-sm text-slate-700 font-mono">{{ v.rc }}</td>
+                <td class="px-6 py-4 text-sm text-slate-700 font-mono text-xs">{{ v.chassis[:15] }}...</td>
+                <td class="px-6 py-4 text-sm text-slate-700">{{ v.owner or '—' }}</td>
+                <td class="px-6 py-4 text-sm text-slate-700">{{ v.received_on }}</td>
+                <td class="px-6 py-4">
+                    {% if v.status == 'In Testing' %}
+                        <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">In Testing</span>
+                    {% elif v.status == 'Test Completed' %}
+                        <span class="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">Test Completed</span>
+                    {% else %}
+                        <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Returned</span>
+                    {% endif %}
+                </td>
+                <td class="px-6 py-4 text-center" onclick="event.stopPropagation()">
+                    <div class="flex gap-2 items-center justify-center">
+                        <a href="/vehicle/{{ v.id }}" class="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700 transition">
+                            View
+                        </a>
+                        <button type="button" onclick="showQRModal({{ v.id }}, '{{ v.name }}')" class="px-3 py-1 bg-bosch-red text-white text-xs font-semibold rounded hover:bg-red-700 transition">
+                            QR Code
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="px-6 py-12 text-center text-slate-500">
+                    <p class="text-lg font-medium">No vehicles found</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- QR CODE MODAL -->
+<div id="qrModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-8">
+        <!-- HEADER -->
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-slate-900">QR Code</h3>
+            <button onclick="closeQRModal()" class="text-2xl text-slate-400 hover:text-slate-600 transition">✕</button>
+        </div>
+
+        <!-- VEHICLE NAME -->
+        <p class="text-slate-600 mb-6 text-center text-sm">
+            <span class="font-semibold text-slate-900" id="qrVehicleName"></span>
+        </p>
+
+        <!-- QR IMAGE -->
+        <div class="bg-slate-100 p-4 rounded-lg mb-6 flex justify-center border border-slate-200">
+            <img id="qrImage" src="" alt="QR Code" class="max-w-xs border-2 border-slate-300 rounded-lg">
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="flex flex-col gap-3">
+            <a id="downloadQRBtn" href="" class="w-full px-4 py-3 bg-bosch-red text-white font-semibold rounded-lg hover:bg-red-700 transition text-center text-sm">
+                Download QR
+            </a>
+            <button onclick="copyQRLink()" class="w-full px-4 py-3 bg-slate-200 text-slate-900 font-semibold rounded-lg hover:bg-slate-300 transition text-sm">
+                Copy Link
+            </button>
+            <button onclick="closeQRModal()" class="w-full px-4 py-3 bg-slate-100 text-slate-700 font-semibold rounded-lg hover:bg-slate-200 transition text-sm">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentVehicleId = null;
+
+    function showQRModal(vehicleId, vehicleName) {
+        currentVehicleId = vehicleId;
+        document.getElementById('qrVehicleName').textContent = vehicleName;
+        document.getElementById('qrImage').src = `/vehicle_qr/${vehicleId}`;
+        document.getElementById('downloadQRBtn').href = `/download_qr/${vehicleId}`;
+        document.getElementById('qrModal').classList.remove('hidden');
+    }
+
+    function closeQRModal() {
+        document.getElementById('qrModal').classList.add('hidden');
+    }
+
+    function copyQRLink() {
+        const link = `${window.location.origin}/vehicle/${currentVehicleId}`;
+        navigator.clipboard.writeText(link).then(() => {
+            alert('✓ Link copied to clipboard!');
+        });
+    }
+
+    document.getElementById('qrModal').addEventListener('click', function(e) {
+        if (e.target === this) closeQRModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeQRModal();
+    });
+
+    // Filter vehicles by status
+    function filterByStatus(status) {
+        const rows = document.querySelectorAll('tbody tr');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            if (row.querySelector('td:nth-child(6)')) {
+                // Get the status text from the status badge (6th column)
+                const statusElement = row.querySelector('td:nth-child(7)');
+                const rowStatus = statusElement ? statusElement.textContent.trim() : '';
+                
+                // Show/hide based on filter
+                if (status === '' || rowStatus === status) {
+                    row.style.display = 'table-row';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+        
+        // Show "No vehicles found" if none match
+        if (visibleCount === 0 && rows.length > 0) {
+            const emptyRow = rows[rows.length - 1];
+            if (emptyRow && emptyRow.querySelector('td[colspan="8"]')) {
+                emptyRow.style.display = 'table-row';
+            }
+        }
+    }
+</script>
+
+{% endblock %}

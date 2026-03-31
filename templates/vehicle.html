@@ -1,0 +1,1419 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+
+    .container {
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* BACK BUTTON */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #dc2626;
+        text-decoration: none;
+        font-weight: 600;
+        margin-bottom: 24px;
+        padding: 10px 16px;
+        border-radius: 8px;
+        transition: all 0.3s;
+        background: rgba(220, 38, 38, 0.1);
+    }
+
+    .back-link:hover {
+        background: rgba(220, 38, 38, 0.2);
+        transform: translateX(-4px);
+    }
+
+    /* VEHICLE HEADER */
+    .vehicle-header {
+        background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 16px;
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 24px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+        flex-wrap: wrap;
+    }
+
+    .vehicle-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .vehicle-info {
+        flex: 1;
+        position: relative;
+        z-index: 1;
+        min-width: 300px;
+    }
+
+    .vehicle-title h2 {
+        margin: 0;
+        font-size: 36px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        margin-bottom: 8px;
+    }
+
+    .vehicle-title p {
+        margin: 8px 0;
+        font-size: 15px;
+        opacity: 0.95;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .vehicle-title p strong {
+        font-weight: 700;
+    }
+
+    .vehicle-meta {
+        display: flex;
+        gap: 24px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .meta-label {
+        font-size: 12px;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .meta-value {
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .status-badge {
+        padding: 12px 24px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .status-testing {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        animation: pulse 2s infinite;
+    }
+
+    .status-completed {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+
+    .status-returned {
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        color: white;
+    }
+
+    @keyframes pulse {
+        0%, 100% { box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
+        50% { box-shadow: 0 4px 25px rgba(16, 185, 129, 0.6); }
+    }
+
+    /* ACTION BUTTONS */
+    .vehicle-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        position: relative;
+        z-index: 1;
+    }
+
+    .action-btn {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .action-edit {
+        background: #3b82f6;
+        color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .action-edit:hover:not(.restricted) {
+        background: #1d4ed8;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    }
+
+    .action-export {
+        background: #10b981;
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .action-export:hover {
+        background: #059669;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+
+    .action-delete {
+        background: #ef4444;
+        color: white;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    .action-delete:hover:not(.restricted) {
+        background: #dc2626;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+    }
+
+    .action-btn.restricted {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    /* TABS */
+    .tabs-container {
+        background: white;
+        border-radius: 16px;
+        padding: 0;
+        margin-bottom: 32px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+        overflow: hidden;
+    }
+
+    .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid #e5e7eb;
+        overflow-x: auto;
+        padding: 0 20px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tabs::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .tabs::-webkit-scrollbar-track {
+        background: #f3f4f6;
+    }
+
+    .tabs::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 2px;
+    }
+
+    .tab-btn {
+        padding: 16px 24px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 600;
+        color: #6b7280;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        position: relative;
+    }
+
+    .tab-btn:hover {
+        color: #374151;
+        background: rgba(0, 0, 0, 0.02);
+    }
+
+    .tab-btn.active {
+        color: #dc2626;
+        border-bottom-color: #dc2626;
+        background: rgba(220, 38, 38, 0.05);
+    }
+
+    /* TAB CONTENT */
+    .tab-content {
+        display: none;
+        animation: fadeIn 0.4s ease;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* CARDS */
+    .card {
+        background: white;
+        border-radius: 12px;
+        padding: 28px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid #f3f4f6;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+
+    .card h3 {
+        margin: 0 0 20px 0;
+        font-size: 20px;
+        font-weight: 800;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #f3f4f6;
+    }
+
+    /* DETAILS */
+    .detail-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 20px;
+    }
+
+    .detail-item {
+        padding: 16px;
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+
+    .detail-item:hover {
+        border-color: #dc2626;
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        transform: translateY(-2px);
+    }
+
+    .detail-label {
+        font-size: 11px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .detail-value {
+        font-size: 16px;
+        color: #111827;
+        font-weight: 700;
+        word-break: break-word;
+    }
+
+    /* IMAGE GALLERY */
+    .image-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .image-container {
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        border-radius: 12px;
+        overflow: hidden;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        position: relative;
+    }
+
+    .image-container:hover {
+        transform: scale(1.05);
+        border-color: #dc2626;
+        box-shadow: 0 8px 24px rgba(220, 38, 38, 0.2);
+    }
+
+    .image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .no-image {
+        color: #9ca3af;
+        font-size: 14px;
+        text-align: center;
+        padding: 40px;
+    }
+
+    /* INSTRUMENTATION */
+    .inst-item {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        border-left: 5px solid #dc2626;
+        border: 2px solid #fecaca;
+        transition: all 0.3s ease;
+    }
+
+    .inst-item:hover {
+        transform: translateX(4px);
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.2);
+    }
+
+    .inst-item.electrical {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-left-color: #0ea5e9;
+        border-color: #bfdbfe;
+    }
+
+    .inst-type {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        background: rgba(220, 38, 38, 0.15);
+        color: #7f1d1d;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+    }
+
+    .inst-item.electrical .inst-type {
+        background: rgba(14, 165, 233, 0.15);
+        color: #1e40af;
+    }
+
+    .inst-activity {
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 8px;
+        font-size: 16px;
+    }
+
+    .inst-dates {
+        font-size: 12px;
+        color: #6b7280;
+        margin-bottom: 12px;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .inst-details {
+        font-size: 14px;
+        color: #374151;
+        line-height: 1.6;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 6px;
+    }
+
+    /* ACTIVITY TIMELINE */
+    .activity-timeline {
+        position: relative;
+        padding-left: 40px;
+    }
+
+    .activity-item {
+        margin-bottom: 28px;
+        position: relative;
+        padding: 16px;
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+
+    .activity-item:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        transform: translateX(4px);
+    }
+
+    .activity-item::before {
+        content: '';
+        position: absolute;
+        left: -40px;
+        top: 20px;
+        width: 14px;
+        height: 14px;
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 0 0 2px #dc2626;
+    }
+
+    .activity-item:first-child::after {
+        content: '';
+        position: absolute;
+        left: -33px;
+        top: 34px;
+        width: 2px;
+        height: calc(100% + 12px);
+        background: linear-gradient(180deg, #dc2626 0%, #fed7aa 100%);
+    }
+
+    .activity-date {
+        font-size: 12px;
+        color: #dc2626;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .activity-description {
+        font-size: 15px;
+        color: #1f2937;
+        margin-top: 8px;
+        font-weight: 500;
+        line-height: 1.6;
+    }
+
+    .activity-performer {
+        font-size: 12px;
+        color: #9ca3af;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    /* FORM SECTION */
+    .form-section {
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        padding: 28px;
+        border-radius: 12px;
+        margin-top: 24px;
+        border: 2px dashed #e5e7eb;
+    }
+
+    .form-section h4 {
+        margin: 0 0 20px 0;
+        font-size: 18px;
+        font-weight: 800;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .form-control {
+        padding: 14px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 14px;
+        font-family: inherit;
+        background: white;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #dc2626;
+        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+        background: #fef2f2;
+    }
+
+    .form-control::placeholder {
+        color: #9ca3af;
+    }
+
+    /* BUTTONS */
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 14px 28px;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: #1f2937;
+        border: 2px solid #e5e7eb;
+        text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+        background: #f9fafb;
+        border-color: #dc2626;
+        color: #dc2626;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #6b7280;
+    }
+
+    .empty-state-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+    }
+
+    /* SUCCESS MESSAGE */
+    .success-box {
+        background: linear-gradient(135deg, #dcfce7 0%, #c6f6d5 100%);
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 5px solid #10b981;
+        border: 2px solid #86efac;
+    }
+
+    .success-box p {
+        color: #10b981;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .vehicle-header {
+            flex-direction: column;
+            gap: 16px;
+            padding: 24px;
+        }
+
+        .vehicle-title h2 {
+            font-size: 24px;
+        }
+
+        .vehicle-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .detail-row {
+            grid-template-columns: 1fr;
+        }
+
+        .tab-btn {
+            padding: 12px 16px;
+            font-size: 13px;
+        }
+
+        .card {
+            padding: 16px;
+        }
+
+        .image-gallery {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .activity-timeline {
+            padding-left: 24px;
+        }
+
+        .activity-item::before {
+            left: -28px;
+            width: 10px;
+            height: 10px;
+        }
+
+        .activity-item:first-child::after {
+            left: -23px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .tabs {
+            padding: 0 12px;
+        }
+
+        .tab-btn {
+            padding: 10px 12px;
+            font-size: 12px;
+        }
+
+        .vehicle-header {
+            padding: 16px;
+        }
+
+        .vehicle-title h2 {
+            font-size: 20px;
+        }
+
+        .card {
+            padding: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .action-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .vehicle-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="container">
+    
+    <!-- BACK BUTTON -->
+    <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+    
+    <!-- VEHICLE HEADER WITH ACTIONS -->
+    <div class="vehicle-header">
+        <div class="vehicle-info">
+            <div class="vehicle-title">
+                <h2>{{ v.name }}</h2>
+                <p>
+                    <strong>🆔 RC:</strong> {{ v.rc }}
+                </p>
+                <p>
+                    <strong>🔗 Chassis:</strong> {{ v.chassis }}
+                </p>
+            </div>
+            <div class="vehicle-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Owner</span>
+                    <span class="meta-value">{{ v.owner if v.owner else 'N/A' }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Received</span>
+                    <span class="meta-value">{{ v.received_on }}</span>
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 16px; align-items: flex-end; width: auto;">
+            <span class="status-badge {% if v.status == 'In Testing' %}status-testing{% elif v.status == 'Test Completed' %}status-completed{% else %}status-returned{% endif %}">
+                {% if v.status == 'In Testing' %}
+                    🔄 In Testing
+                {% elif v.status == 'Test Completed' %}
+                    ✓ Test Completed
+                {% else %}
+                    ↩️ Returned
+                {% endif %}
+            </span>
+            <div class="vehicle-actions">
+                {% if current_user.role != "User" %}
+                    <a href="/edit_vehicle/{{ v.id }}" class="action-btn action-edit">✏️ Edit</a>
+                {% else %}
+                    <button class="action-btn action-edit restricted" title="Users cannot edit vehicles" disabled>✏️ Edit</button>
+                {% endif %}
+                
+                <a href="/export_vehicle/{{ v.id }}" class="action-btn action-export">📊 Export</a>
+                
+                {% if current_user.role == "Admin" %}
+                    <button type="button" class="action-btn action-delete" onclick="confirmDelete({{ v.id }})">🗑️ Delete</button>
+                {% else %}
+                    <button class="action-btn action-delete restricted" title="Only admins can delete vehicles" disabled>🗑️ Delete</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- TABS -->
+    <div class="tabs-container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab(event, 'details')">📋 Details</button>
+            <button class="tab-btn" onclick="switchTab(event, 'technical')">⚙️ Technical</button>
+            <button class="tab-btn" onclick="switchTab(event, 'instrumentation')">🔧 Instrumentation</button>
+            <button class="tab-btn" onclick="switchTab(event, 'activity')">📊 Activity</button>
+            <button class="tab-btn" onclick="switchTab(event, 'test-completion')">✓ Test Completion</button>
+            <button class="tab-btn" onclick="switchTab(event, 'return')">↩️ Return</button>
+        </div>
+    </div>
+    
+    <!-- TAB: VEHICLE DETAILS -->
+    <div id="details" class="tab-content active">
+        <div class="card">
+            <h3>📥 Vehicle Received</h3>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <div class="detail-label">Vehicle Name</div>
+                    <div class="detail-value">{{ v.name }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Vehicle Owner</div>
+                    <div class="detail-value">{{ v.owner if v.owner else 'Not Specified' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Received On</div>
+                    <div class="detail-value">{{ v.received_on }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VEHICLE CONDITION CHECKLIST -->
+        <div class="card">
+            <h3>Vehicle Condition Checklist</h3>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <div class="detail-label">Number of Keys</div>
+                    <div class="detail-value">{{ v.number_of_keys if v.number_of_keys else 'Not Specified' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Tire Condition</div>
+                    <div class="detail-value">{{ v.tire_condition if v.tire_condition else 'Not Specified' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Battery Status</div>
+                    <div class="detail-value">{{ v.battery_status if v.battery_status else 'Not Specified' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Engine Starting</div>
+                    <div class="detail-value">{{ v.engine_status if v.engine_status else 'Not Specified' }}</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                <h4 style="font-weight: 700; margin-bottom: 16px;">Damage Assessment:</h4>
+                <div class="space-y-4">
+                    {% if v.scratches_present %}
+                    <div style="border-left: 4px solid #f97316; padding: 16px; background: #fff7ed; border-radius: 8px;">
+                        <div style="font-weight: 700; color: #9a3412; margin-bottom: 8px;">Scratches</div>
+                        <div style="color: #6b7280; margin-bottom: 8px;">{{ v.scratches_details if v.scratches_details else 'Present' }}</div>
+                        {% if v.scratches_image %}
+                        <img src="/static/uploads/{{ v.scratches_image }}" alt="Scratches" onclick="openImageModal('/static/uploads/{{ v.scratches_image }}')" style="max-width: 200px; max-height: 200px; border-radius: 6px; cursor: pointer; margin-top: 8px;">
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if v.dents_present %}
+                    <div style="border-left: 4px solid #f97316; padding: 16px; background: #fff7ed; border-radius: 8px;">
+                        <div style="font-weight: 700; color: #9a3412; margin-bottom: 8px;">Dents</div>
+                        <div style="color: #6b7280; margin-bottom: 8px;">{{ v.dents_details if v.dents_details else 'Present' }}</div>
+                        {% if v.dents_image %}
+                        <img src="/static/uploads/{{ v.dents_image }}" alt="Dents" onclick="openImageModal('/static/uploads/{{ v.dents_image }}')" style="max-width: 200px; max-height: 200px; border-radius: 6px; cursor: pointer; margin-top: 8px;">
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if v.glass_damage_present %}
+                    <div style="border-left: 4px solid #f97316; padding: 16px; background: #fff7ed; border-radius: 8px;">
+                        <div style="font-weight: 700; color: #9a3412; margin-bottom: 8px;">Glass Damage</div>
+                        <div style="color: #6b7280; margin-bottom: 8px;">{{ v.glass_damage_details if v.glass_damage_details else 'Present' }}</div>
+                        {% if v.glass_damage_image %}
+                        <img src="/static/uploads/{{ v.glass_damage_image }}" alt="Glass Damage" onclick="openImageModal('/static/uploads/{{ v.glass_damage_image }}')" style="max-width: 200px; max-height: 200px; border-radius: 6px; cursor: pointer; margin-top: 8px;">
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if v.lights_issue_present %}
+                    <div style="border-left: 4px solid #f97316; padding: 16px; background: #fff7ed; border-radius: 8px;">
+                        <div style="font-weight: 700; color: #9a3412; margin-bottom: 8px;">Lights Issue</div>
+                        <div style="color: #6b7280; margin-bottom: 8px;">{{ v.lights_details if v.lights_details else 'Present' }}</div>
+                        {% if v.lights_image %}
+                        <img src="/static/uploads/{{ v.lights_image }}" alt="Lights Issue" onclick="openImageModal('/static/uploads/{{ v.lights_image }}')" style="max-width: 200px; max-height: 200px; border-radius: 6px; cursor: pointer; margin-top: 8px;">
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if not v.scratches_present and not v.dents_present and not v.glass_damage_present and not v.lights_issue_present %}
+                <div style="padding: 16px; background: #dcfce7; border-radius: 8px; color: #166534;">
+                    <strong>No damage issues reported</strong>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if v.condition_notes %}
+            <div style="margin-top: 20px; padding: 16px; background: #f3f4f6; border-radius: 8px; border-left: 4px solid #dc2626;">
+                <div style="font-weight: 700; color: #374151; margin-bottom: 8px;">Additional Notes:</div>
+                <div style="color: #6b7280; line-height: 1.6;">{{ v.condition_notes }}</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3>🆔 Vehicle Identification</h3>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <div class="detail-label">RC Number</div>
+                    <div class="detail-value">{{ v.rc }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Chassis Number</div>
+                    <div class="detail-value">{{ v.chassis }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Engine Number</div>
+                    <div class="detail-value">{{ v.engine if v.engine else 'Not Specified' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Bike Model</div>
+                    <div class="detail-value">{{ v.bike if v.bike else 'Not Specified' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Number Plate</div>
+                    <div class="detail-value">{{ v.number_plate if v.number_plate else 'Not Specified' }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>📸 Vehicle Images</h3>
+            {% if v.image %}
+                <div class="image-gallery">
+                    <div class="image-container" onclick="openImageModal('/static/uploads/{{ v.image }}')">
+                        <img src="/static/uploads/{{ v.image }}" alt="{{ v.name }}">
+                    </div>
+                </div>
+                <div style="margin-top: 12px; display: flex; gap: 8px;">
+                    <button onclick="deleteVehicleImage({{ v.id }})" style="padding: 8px 16px; background-color: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;" title="Delete this image">
+                        🗑️ Delete Image
+                    </button>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📷</div>
+                    <p>No images uploaded yet</p>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if v.status == "Returned" and v.return_image %}
+        <div class="card">
+            <h3>🚙 Return Image</h3>
+            <div class="image-gallery">
+                <div class="image-container" onclick="openImageModal('/static/uploads/{{ v.return_image }}')">
+                    <img src="/static/uploads/{{ v.return_image }}" alt="Return image of {{ v.name }}">
+                </div>
+            </div>
+            <p style="color: #6b7280; font-size: 14px; margin-top: 12px;">📅 Returned on: <strong>{{ v.end_date }}</strong></p>
+            <div style="margin-top: 12px; display: flex; gap: 8px;">
+                <button onclick="deleteReturnImage({{ v.id }})" style="padding: 8px 16px; background-color: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;" title="Delete this image">
+                    🗑️ Delete Image
+                </button>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <h3>📋 Insurance & Documents</h3>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <div class="detail-label">Insurance Details</div>
+                    <div class="detail-value">{{ v.insurance if v.insurance else 'Not Specified' }}</div>
+                </div>
+                {% if v.insurance_file %}
+                <div class="detail-item">
+                    <div class="detail-label">Insurance Document</div>
+                    <div class="detail-value">
+                        <a href="/static/uploads/{{ v.insurance_file }}" target="_blank" style="color: #dc2626; text-decoration: underline; font-weight: 700;">📁 Download</a>
+                    </div>
+                </div>
+                {% endif %}
+                {% if v.rc_card %}
+                <div class="detail-item">
+                    <div class="detail-label">RC Card</div>
+                    <div class="detail-value">
+                        <a href="/static/uploads/{{ v.rc_card }}" target="_blank" style="color: #dc2626; text-decoration: underline; font-weight: 700;">📁 Download</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>📅 Project Timeline</h3>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <div class="detail-label">Start Date</div>
+                    <div class="detail-value">{{ v.start_date if v.start_date else 'Pending' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">End Date</div>
+                    <div class="detail-value">{{ v.end_date if v.end_date else 'In Progress' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TAB: TECHNICAL DETAILS -->
+    <div id="technical" class="tab-content">
+        <div class="card">
+            <h3>⚙️ Technical Specifications</h3>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <div class="detail-label">Engine CC</div>
+                    <div class="detail-value">{{ v.cc if v.cc else 'N/A' }}{% if v.cc %} cc{% endif %}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Gears</div>
+                    <div class="detail-value">{{ v.gears if v.gears else 'N/A' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Inertia</div>
+                    <div class="detail-value">{{ v.inertia if v.inertia else 'N/A' }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>🛣️ Road Load Values</h3>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <div class="detail-label">Road Load A</div>
+                    <div class="detail-value">{{ v.road_a if v.road_a else 'N/A' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Road Load B</div>
+                    <div class="detail-value">{{ v.road_b if v.road_b else 'N/A' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Road Load C</div>
+                    <div class="detail-value">{{ v.road_c if v.road_c else 'N/A' }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>🛢️ Fluids & Lubricants</h3>
+            <div class="detail-row">
+                <div class="detail-item">
+                    <div class="detail-label">Fuel Type</div>
+                    <div class="detail-value">{{ v.fuel if v.fuel else 'N/A' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Oil Grade</div>
+                    <div class="detail-value">{{ v.oil if v.oil else 'N/A' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Coolant Grade</div>
+                    <div class="detail-value">{{ v.coolant if v.coolant else 'N/A' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TAB: INSTRUMENTATION -->
+    <div id="instrumentation" class="tab-content">
+        <div class="card">
+            <h3>🔴 Mechanical Instrumentation</h3>
+            {% set mech_inst = inst|selectattr('type', 'equalto', 'Mechanical')|list %}
+            {% if mech_inst %}
+                {% for i in mech_inst %}
+                    <div class="inst-item">
+                        <div class="inst-type">⚙️ Mechanical</div>
+                        <div class="inst-activity">{{ i.activity }}</div>
+                        <div class="inst-dates">
+                            <span>📅 Requested: <strong>{{ i.request_date }}</strong></span>
+                            <span>✓ Completed: <strong>{{ i.completion_date }}</strong></span>
+                        </div>
+                        <div class="inst-details">{{ i.details }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">⚙️</div>
+                    <p>No mechanical instrumentation recorded</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="card">
+            <h3>⚡ Electrical Instrumentation</h3>
+            {% set elec_inst = inst|selectattr('type', 'equalto', 'Electrical')|list %}
+            {% if elec_inst %}
+                {% for i in elec_inst %}
+                    <div class="inst-item electrical">
+                        <div class="inst-type">⚡ Electrical</div>
+                        <div class="inst-activity">{{ i.activity }}</div>
+                        <div class="inst-dates">
+                            <span>📅 Requested: <strong>{{ i.request_date }}</strong></span>
+                            <span>✓ Completed: <strong>{{ i.completion_date }}</strong></span>
+                        </div>
+                        <div class="inst-details">{{ i.details }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">⚡</div>
+                    <p>No electrical instrumentation recorded</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-section">
+            <h4>➕ Add New Instrumentation</h4>
+            <form method="post" action="/add_inst/{{ v.id }}">
+                <div class="form-grid">
+                    <select name="type" class="form-control" required>
+                        <option value="">Select Type *</option>
+                        <option value="Mechanical">⚙️ Mechanical</option>
+                        <option value="Electrical">⚡ Electrical</option>
+                    </select>
+                    <input name="activity" placeholder="Activity Name *" class="form-control" required>
+                    <input name="request_date" type="date" placeholder="Request Date" class="form-control">
+                    <input name="completion_date" type="date" placeholder="Completion Date" class="form-control">
+                    <input name="details" placeholder="Modification Details" class="form-control" style="grid-column: 1 / -1;">
+                </div>
+                <button type="submit" class="btn btn-primary">➕ Add Instrumentation</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- TAB: ACTIVITY LOG -->
+    <div id="activity" class="tab-content">
+        <div class="card">
+            <h3>📊 Activity Timeline</h3>
+            {% if act %}
+                <div class="activity-timeline">
+                    {% for a in act %}
+                        <div class="activity-item">
+                            <div class="activity-date">{{ a.date }}</div>
+                            <div class="activity-description">{{ a.description }}</div>
+                            <div class="activity-performer">👤 By: {{ a.performed_by }} | ⏱️ {{ a.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📊</div>
+                    <p>No activities logged yet</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-section">
+            <h4>➕ Add Activity Log</h4>
+            <form method="post" action="/add_activity/{{ v.id }}">
+                <div class="form-grid">
+                    <input name="description" placeholder="Activity Description *" class="form-control" style="grid-column: 1 / -1;" required>
+                    <input name="date" type="date" placeholder="Date *" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary">📝 Log Activity</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- TAB: TEST COMPLETION -->
+    <div id="test-completion" class="tab-content">
+        <div class="card">
+            <h3>✓ Test Completion</h3>
+            {% if v.status == "In Testing" %}
+                <p style="margin-bottom: 20px; color: #6b7280; font-size: 15px; line-height: 1.6;">
+                    Mark this vehicle's testing as complete. This will change the status from <strong>In Testing</strong> to <strong>Test Completed</strong>. 
+                    You can then return the vehicle or cancel the completion.
+                </p>
+                <form method="post" action="/test_completed_vehicle/{{ v.id }}">
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">✓ Mark Test Completed</button>
+                        <a href="/dashboard" class="btn btn-secondary">← Cancel</a>
+                    </div>
+                </form>
+            {% elif v.status == "Test Completed" %}
+                <div class="success-box">
+                    <p>✓ This vehicle testing has been completed</p>
+                </div>
+                <form method="post" action="/cancel_test_completed/{{ v.id }}" style="margin-top: 20px;">
+                    <p style="margin-bottom: 15px; color: #6b7280; font-size: 14px;">Need to resume testing? Cancel this to go back to 'In Testing' status.</p>
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel? This will change the status back to In Testing.');">↺ Resume Testing</button>
+                </form>
+            {% else %}
+                <div class="info-box" style="background-color: #f0f9ff; border: 1px solid #bfdbfe; padding: 16px; border-radius: 8px; color: #1e40af;">
+                    <p>This vehicle has already been returned. You cannot modify the test completion status.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- TAB: RETURN VEHICLE -->
+    <div id="return" class="tab-content">
+        <div class="card">
+            <h3>↩️ Return Vehicle</h3>
+            {% if v.status == "In Testing" %}
+                <p style="margin-bottom: 20px; color: #6b7280; font-size: 15px; line-height: 1.6;">
+                    Mark this vehicle as returned to change its status from <strong>In Testing</strong> to <strong>Returned</strong>. 
+                    It's recommended to mark as "Test Completed" first. This action will update the vehicle's status and end date in the system.
+                </p>
+                <form method="post" action="/return_vehicle/{{ v.id }}" enctype="multipart/form-data">
+                    <div class="form-grid">
+                        <input name="return_date" type="date" placeholder="Return Date *" class="form-control" required>
+                        <input name="return_notes" placeholder="Return Notes (Optional)" class="form-control" style="grid-column: 1 / -1;">
+                        <div style="grid-column: 1 / -1;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">📸 Upload Return Image (Optional)</label>
+                            <input name="return_image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" class="form-control" style="padding: 10px; border: 2px dashed #d1d5db; border-radius: 8px; cursor: pointer;">
+                            <small style="color: #6b7280; display: block; margin-top: 6px;">Supported formats: PNG, JPG, JPEG, GIF, WebP (Max size: 10MB)</small>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">✓ Mark as Returned</button>
+                        <a href="/dashboard" class="btn btn-secondary">← Cancel</a>
+                    </div>
+                </form>
+            {% elif v.status == "Test Completed" %}
+                <p style="margin-bottom: 20px; color: #6b7280; font-size: 15px; line-height: 1.6;">
+                    The testing is complete. Proceed to return the vehicle to mark its status as <strong>Returned</strong>.
+                </p>
+                <form method="post" action="/return_vehicle/{{ v.id }}" enctype="multipart/form-data">
+                    <div class="form-grid">
+                        <input name="return_date" type="date" placeholder="Return Date *" class="form-control" required>
+                        <input name="return_notes" placeholder="Return Notes (Optional)" class="form-control" style="grid-column: 1 / -1;">
+                        <div style="grid-column: 1 / -1;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">📸 Upload Return Image (Optional)</label>
+                            <input name="return_image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" class="form-control" style="padding: 10px; border: 2px dashed #d1d5db; border-radius: 8px; cursor: pointer;">
+                            <small style="color: #6b7280; display: block; margin-top: 6px;">Supported formats: PNG, JPG, JPEG, GIF, WebP (Max size: 10MB)</small>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">✓ Proceed to Return</button>
+                        <a href="/dashboard" class="btn btn-secondary">← Cancel</a>
+                    </div>
+                </form>
+            {% else %}
+                <div class="success-box">
+                    <p>✓ This vehicle has already been returned on {{ v.end_date }}</p>
+                </div>
+                <form method="post" action="/cancel_return_vehicle/{{ v.id }}" style="margin-top: 20px;">
+                    <p style="margin-bottom: 15px; color: #6b7280; font-size: 14px;">Need to undo the return? You can cancel this return below to set the vehicle back to 'Test Completed' status.</p>
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel the return? This will change the status back to Test Completed.');">✕ Cancel Return</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- IMAGE MODAL -->
+<div id="imageModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9);">
+    <span onclick="closeImageModal()" style="position: absolute; top: 20px; right: 30px; font-size: 28px; font-weight: bold; color: white; cursor: pointer;">×</span>
+    <img id="modalImage" src="" style="margin: auto; display: block; width: 80%; max-height: 80vh; margin-top: 10%; border-radius: 12px;">
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div id="deleteModal" style="display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5);">
+    <div style="background: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 40px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); max-width: 400px; width: 90%;">
+        <h2 style="margin: 0 0 16px 0; color: #1f2937; font-size: 24px;">🗑️ Delete Vehicle?</h2>
+        <p style="color: #6b7280; margin: 0 0 24px 0; line-height: 1.6;">Are you sure you want to delete this vehicle? This action cannot be undone and all related data will be permanently removed.</p>
+        <div style="display: flex; gap: 12px;">
+            <button onclick="submitDelete()" style="flex: 1; padding: 12px; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">Delete</button>
+            <button onclick="closeDeleteModal()" style="flex: 1; padding: 12px; background: #e5e7eb; color: #1f2937; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<form id="deleteForm" method="POST" style="display: none;"></form>
+
+<script>
+    let vehicleToDelete = null;
+
+    function switchTab(event, tabName) {
+        const tabs = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => tab.classList.remove('active'));
+        
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    function openImageModal(src) {
+        document.getElementById('imageModal').style.display = 'block';
+        document.getElementById('modalImage').src = src;
+    }
+
+    function closeImageModal() {
+        document.getElementById('imageModal').style.display = 'none';
+    }
+
+    function confirmDelete(vehicleId) {
+        vehicleToDelete = vehicleId;
+        document.getElementById('deleteModal').style.display = 'block';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+        vehicleToDelete = null;
+    }
+
+    function submitDelete() {
+        const form = document.getElementById('deleteForm');
+        form.action = '/delete_vehicle/' + vehicleToDelete;
+        form.method = 'POST';
+        form.submit();
+    }
+
+    window.onclick = function(event) {
+        const imageModal = document.getElementById('imageModal');
+        const deleteModal = document.getElementById('deleteModal');
+        
+        if (event.target == imageModal) {
+            imageModal.style.display = 'none';
+        }
+        if (event.target == deleteModal) {
+            deleteModal.style.display = 'none';
+        }
+    }
+
+    // Delete vehicle image
+    function deleteVehicleImage(vehicleId) {
+        if (confirm('⚠️ Are you sure you want to delete this image? This cannot be undone!')) {
+            fetch(`/api/delete_vehicle_image/${vehicleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✓ Image deleted successfully');
+                    location.reload();
+                } else {
+                    alert('✗ Error: ' + (data.error || 'Failed to delete image'));
+                }
+            })
+            .catch(error => {
+                alert('✗ Error: ' + error.message);
+            });
+        }
+    }
+
+    // Delete return image
+    function deleteReturnImage(vehicleId) {
+        if (confirm('⚠️ Are you sure you want to delete this return image? This cannot be undone!')) {
+            fetch(`/api/delete_return_image/${vehicleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✓ Image deleted successfully');
+                    location.reload();
+                } else {
+                    alert('✗ Error: ' + (data.error || 'Failed to delete image'));
+                }
+            })
+            .catch(error => {
+                alert('✗ Error: ' + error.message);
+            });
+        }
+    }
+
+    // Delete vehicle image from edit page
+    function deleteVehicleImageEditPage(vehicleId) {
+        if (confirm('⚠️ Are you sure you want to delete this image? This cannot be undone!')) {
+            fetch(`/api/delete_vehicle_image/${vehicleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✓ Image deleted successfully');
+                    location.reload();
+                } else {
+                    alert('✗ Error: ' + (data.error || 'Failed to delete image'));
+                }
+            })
+            .catch(error => {
+                alert('✗ Error: ' + error.message);
+            });
+        }
+    }
+</script>
+
+{% endblock %}

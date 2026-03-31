@@ -1,0 +1,804 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - BikeVault{% endblock %}
+
+<style>
+    /* BACK BUTTON STYLE - Simple & Clean */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #dc2626 !important;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 15px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        transition: all 0.25s ease;
+        background: rgba(220, 38, 38, 0.1) !important;
+        margin-bottom: 24px;
+        border: none;
+    }
+
+    .back-link:hover {
+        background: rgba(220, 38, 38, 0.15) !important;
+        transform: translateX(-2px);
+        color: #b91c1c !important;
+    }
+
+    .back-link:active {
+        background: rgba(220, 38, 38, 0.2) !important;
+    }
+</style>
+
+{% block content %}
+
+<!-- BACK BUTTON -->
+<a href="/dashboard" class="back-link" style="display: inline-flex; align-items: center; gap: 8px; color: #dc2626; text-decoration: none; font-weight: 600; font-size: 15px; padding: 12px 16px; border-radius: 8px; background: rgba(220, 38, 38, 0.1); margin-bottom: 24px; border: none; transition: all 0.25s ease;">
+    ← Back to Dashboard
+</a>
+
+<!-- PAGE HEADER -->
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900">⚙️ Admin Panel</h1>
+    <p class="text-slate-600 text-sm mt-1">Manage users, vehicles, and system settings</p>
+</div>
+
+<!-- TABS NAVIGATION -->
+<div class="bg-white rounded-lg shadow-sm border border-slate-200 mb-8">
+    <div class="flex border-b border-slate-200">
+        <button onclick="switchTab('dashboard')" class="tab-btn active px-6 py-4 font-semibold text-sm border-b-2 border-bosch-red text-bosch-red">
+            📊 Dashboard
+        </button>
+        <button onclick="switchTab('users')" class="tab-btn px-6 py-4 font-semibold text-sm text-slate-600 hover:text-slate-900 transition">
+            👥 Users
+        </button>
+        <button onclick="switchTab('analytics')" class="tab-btn px-6 py-4 font-semibold text-sm text-slate-600 hover:text-slate-900 transition">
+            📈 Analytics
+        </button>
+        <button onclick="switchTab('settings')" class="tab-btn px-6 py-4 font-semibold text-sm text-slate-600 hover:text-slate-900 transition">
+            🔧 Settings
+        </button>
+    </div>
+</div>
+
+<!-- TAB CONTENT -->
+
+<!-- DASHBOARD TAB -->
+<div id="dashboard-tab" class="tab-content">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <!-- TOTAL USERS -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+            <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">Total Users</p>
+            <p class="text-4xl font-bold text-bosch-dark mt-2">{{ total_users }}</p>
+            <p class="text-xs text-slate-500 mt-2">Active in system</p>
+        </div>
+
+        <!-- TOTAL VEHICLES -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+            <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">Total Vehicles</p>
+            <p class="text-4xl font-bold text-blue-600 mt-2">{{ total_vehicles }}</p>
+            <p class="text-xs text-slate-500 mt-2">In system</p>
+        </div>
+
+        <!-- IN TESTING -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+            <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">In Testing</p>
+            <p class="text-4xl font-bold text-blue-600 mt-2">{{ testing_count }}</p>
+            <p class="text-xs text-slate-500 mt-2">Currently testing</p>
+        </div>
+
+        <!-- TEST COMPLETED -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+            <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">Test Completed</p>
+            <p class="text-4xl font-bold text-amber-600 mt-2">{{ test_completed_count }}</p>
+            <p class="text-xs text-slate-500 mt-2">Completed testing</p>
+        </div>
+
+        <!-- RETURNED -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+            <p class="text-slate-600 text-xs font-semibold uppercase tracking-wide">Returned</p>
+            <p class="text-4xl font-bold text-green-600 mt-2">{{ returned_count }}</p>
+            <p class="text-xs text-slate-500 mt-2">Returned to owner</p>
+        </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8 mb-8">
+        <h3 class="text-lg font-bold text-slate-900 mb-6">Quick Actions</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button onclick="switchTab('users')" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition text-sm">
+                + Add User
+            </button>
+            <button onclick="exportData()" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition text-sm">
+                📥 Export Data
+            </button>
+            <button onclick="generateReport()" class="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition text-sm">
+                📄 Generate Report
+            </button>
+        </div>
+    </div>
+
+    <!-- RECENT ACTIVITY -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+        <h3 class="text-lg font-bold text-slate-900 mb-6">Recent Activity</h3>
+        <div class="space-y-4">
+            {% for activity in recent_activities %}
+            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <div>
+                    <p class="font-semibold text-slate-900">{{ activity.description }}</p>
+                    <p class="text-xs text-slate-500">{{ activity.created_at }}</p>
+                </div>
+                <span class="px-3 py-1 bg-slate-200 text-slate-700 text-xs font-semibold rounded-full">{{ activity.type }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- USERS TAB -->
+<div id="users-tab" class="tab-content hidden">
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8 mb-8">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-slate-900">Manage Users</h3>
+            <button onclick="showAddUserModal()" class="px-6 py-2 bg-bosch-red text-white font-semibold rounded-lg hover:bg-red-700 transition text-sm">
+                + Add User
+            </button>
+        </div>
+
+        <!-- USERS TABLE -->
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Username</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for user in users %}
+                    <tr class="hover:bg-slate-50 transition cursor-pointer" onclick="showUserActions({{ user.id }}, '{{ user.username }}', '{{ user.role }}')">
+                        <td class="px-6 py-4 text-sm text-slate-700">{{ user.id }}</td>
+                        <td class="px-6 py-4 text-sm font-semibold text-slate-900">{{ user.username }}</td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">{{ user.role }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Active</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ANALYTICS TAB -->
+<div id="analytics-tab" class="tab-content hidden">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <!-- USER ROLES -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+            <h3 class="text-lg font-bold text-slate-900 mb-6">Users by Role</h3>
+            <div class="space-y-4">
+                {% if role_distribution %}
+                    {% for role, count in role_distribution.items() %}
+                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                        <span class="font-semibold text-slate-700">{{ role }}</span>
+                        <span class="px-3 py-1 bg-slate-200 text-slate-700 font-bold rounded-full">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-slate-500 text-sm">No users found</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- SYSTEM STATUS -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+            <h3 class="text-lg font-bold text-slate-900 mb-6">System Status</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-semibold text-slate-700">Database Status</span>
+                    <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">✓ Active</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-semibold text-slate-700">Email Service</span>
+                    {% if mail_config.is_configured %}
+                        <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">✓ Configured</span>
+                    {% else %}
+                        <span class="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">⚠ Pending</span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-semibold text-slate-700">Total Users</span>
+                    <span class="text-sm font-bold text-slate-900">{{ total_users }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SETTINGS TAB -->
+<div id="settings-tab" class="tab-content hidden">
+    <div class="space-y-8">
+        <!-- EMAIL CONFIGURATION -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-slate-900">📧 Email Configuration</h3>
+                {% if mail_config.is_configured %}
+                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">✓ Configured</span>
+                {% else %}
+                    <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">✗ Not Configured</span>
+                {% endif %}
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <p class="text-slate-600 text-sm font-semibold">Mail Server</p>
+                    <p class="text-sm text-slate-900 mt-2 font-mono">{{ mail_config.server }}</p>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <p class="text-slate-600 text-sm font-semibold">Mail Port</p>
+                    <p class="text-sm text-slate-900 mt-2 font-mono">{{ mail_config.port }}</p>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <p class="text-slate-600 text-sm font-semibold">Username</p>
+                    <p class="text-sm text-slate-900 mt-2 font-mono">{{ mail_config.username }}</p>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <p class="text-slate-600 text-sm font-semibold">TLS Enabled</p>
+                    <p class="text-sm text-slate-900 mt-2 font-mono">{% if mail_config.use_tls %}Yes{% else %}No{% endif %}</p>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <p class="text-slate-600 text-sm font-semibold">Default Sender</p>
+                    <p class="text-sm text-slate-900 mt-2 font-mono">{{ mail_config.sender }}</p>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <p class="text-slate-600 text-sm font-semibold">Admin Email</p>
+                    <p class="text-sm text-slate-900 mt-2 font-mono">{{ mail_config.admin_email }}</p>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p class="text-sm text-blue-900">
+                    <strong>ℹ️ Setup Required:</strong> To enable email notifications, set the following environment variables in your <code class="bg-white px-2 py-1 rounded text-xs">.env</code> file:
+                </p>
+                <pre class="bg-white border border-blue-200 rounded p-3 mt-3 text-xs overflow-x-auto"><code>MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_DEFAULT_SENDER=noreply@bikevault.com
+ADMIN_EMAIL=admin@bikevault.com</code></pre>
+            </div>
+        </div>
+
+        <!-- SYSTEM SETTINGS -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+            <h3 class="text-lg font-bold text-slate-900 mb-6">System Settings</h3>
+            <form class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">System Name</label>
+                    <input type="text" value="BikeVault Testing Centre" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-bosch-red text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Email Notifications</label>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        {% if mail_config.is_configured %}
+                            <input type="checkbox" checked disabled class="w-4 h-4">
+                            <span class="text-sm text-green-700">✓ Email notifications are enabled</span>
+                        {% else %}
+                            <input type="checkbox" disabled class="w-4 h-4">
+                            <span class="text-sm text-amber-700">⚠ Email notifications need configuration</span>
+                        {% endif %}
+                    </label>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Data Retention (Days)</label>
+                    <input type="number" value="90" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-bosch-red text-sm">
+                </div>
+                <div class="flex gap-4">
+                    <button type="button" onclick="saveSettings()" class="px-6 py-2 bg-bosch-red text-white font-semibold rounded-lg hover:bg-red-700 transition text-sm">
+                        Save Settings
+                    </button>
+                    {% if mail_config.is_configured %}
+                    <button type="button" onclick="testEmail()" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition text-sm">
+                        📧 Test Email
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+        <!-- DATABASE -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+            <h3 class="text-lg font-bold text-slate-900 mb-6">Database</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <p class="text-slate-600 text-sm font-semibold">Database Size</p>
+                    <p class="text-2xl font-bold text-slate-900 mt-2">2.5 MB</p>
+                </div>
+                <div class="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <p class="text-slate-600 text-sm font-semibold">Last Backup</p>
+                    <p class="text-2xl font-bold text-slate-900 mt-2">Today, 10:30 AM</p>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="backupDatabase()" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition text-sm">
+                    💾 Backup Now
+                </button>
+                <button onclick="restoreDatabase()" class="px-6 py-2 bg-slate-600 text-white font-semibold rounded-lg hover:bg-slate-700 transition text-sm">
+                    📥 Restore
+                </button>
+            </div>
+        </div>
+
+        <!-- SECURITY -->
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+            <h3 class="text-lg font-bold text-slate-900 mb-6">Security</h3>
+            <div class="space-y-4">
+                <button onclick="changePassword()" class="w-full px-6 py-3 bg-slate-800 text-white font-semibold rounded-lg hover:bg-slate-900 transition text-sm text-left">
+                    🔐 Change Master Password
+                </button>
+                <button onclick="viewAuditLog()" class="w-full px-6 py-3 bg-slate-200 text-slate-900 font-semibold rounded-lg hover:bg-slate-300 transition text-sm text-left">
+                    📋 View Audit Log
+                </button>
+            </div>
+        </div>
+
+        <!-- DANGER ZONE -->
+        <div class="bg-white rounded-lg shadow-sm border border-red-300 p-8">
+            <h3 class="text-lg font-bold text-red-600 mb-6">Danger Zone</h3>
+            <p class="text-sm text-slate-600 mb-4">Irreversible actions. Use with caution!</p>
+            <button onclick="resetSystem()" class="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition text-sm">
+                🗑️ Reset System
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPTS -->
+<script>
+    function switchTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.add('hidden');
+        });
+        
+        // Remove active state from all buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active', 'border-b-2', 'border-bosch-red', 'text-bosch-red');
+            btn.classList.add('text-slate-600');
+        });
+        
+        // Show selected tab
+        document.getElementById(tabName + '-tab').classList.remove('hidden');
+        
+        // Set active button
+        event.target.classList.add('active', 'border-b-2', 'border-bosch-red', 'text-bosch-red');
+        event.target.classList.remove('text-slate-600');
+    }
+
+    // USER ACTIONS MODAL
+    function showUserActions(userId, username, role) {
+        const modalHTML = `
+        <div id="userActionsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+                <h3 class="text-2xl font-bold text-slate-900 mb-2">User: {{ username }}</h3>
+                <p class="text-slate-600 text-sm mb-6">ID: ${userId} | Role: ${role}</p>
+                <div class="flex gap-3">
+                    <button onclick="editUser(${userId})" class="flex-1 px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
+                        ✏️ Edit
+                    </button>
+                    <button onclick="deleteUser(${userId})" class="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">
+                        🗑️ Delete
+                    </button>
+                    <button onclick="closeUserActionsModal()" class="flex-1 px-4 py-3 bg-slate-400 text-white font-semibold rounded-lg hover:bg-slate-500 transition">
+                        ← Back
+                    </button>
+                </div>
+            </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    function closeUserActionsModal() {
+        const modal = document.getElementById('userActionsModal');
+        if (modal) modal.remove();
+    }
+
+    // ADD USER MODAL
+    function showAddUserModal() {
+        const modalHTML = `
+        <div id="addUserModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+                <h3 class="text-2xl font-bold text-slate-900 mb-6">➕ Add New User</h3>
+                <form onsubmit="submitAddUser(event)" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Username</label>
+                        <input type="text" id="newUsername" required placeholder="Enter username" class="w-full px-4 py-2 border-2 border-slate-300 rounded-lg focus:border-red-600 focus:outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+                        <input type="password" id="newPassword" required placeholder="Minimum 6 characters" class="w-full px-4 py-2 border-2 border-slate-300 rounded-lg focus:border-red-600 focus:outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Role</label>
+                        <select id="newRole" required class="w-full px-4 py-2 border-2 border-slate-300 rounded-lg focus:border-red-600 focus:outline-none text-sm">
+                            <option value="User">👤 User</option>
+                            <option value="Engineer">🔧 Engineer</option>
+                            <option value="Admin">👨‍💼 Admin</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-3 mt-8">
+                        <button type="submit" class="flex-1 px-4 py-3 bg-bosch-red text-white font-semibold rounded-lg hover:bg-red-700 transition">
+                            ✓ Create User
+                        </button>
+                        <button type="button" onclick="closeAddUserModal()" class="flex-1 px-4 py-3 bg-slate-400 text-white font-semibold rounded-lg hover:bg-slate-500 transition">
+                            ← Back
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    function closeAddUserModal() {
+        const modal = document.getElementById('addUserModal');
+        if (modal) modal.remove();
+    }
+
+    function submitAddUser(event) {
+        event.preventDefault();
+        
+        const username = document.getElementById('newUsername').value;
+        const password = document.getElementById('newPassword').value;
+        const role = document.getElementById('newRole').value;
+        
+        if (password.length < 6) {
+            alert('❌ Password must be at least 6 characters');
+            return;
+        }
+        
+        fetch('/api/add_user', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password,
+                role: role
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ ' + data.message);
+                closeAddUserModal();
+                location.reload();
+            } else {
+                alert('❌ Error: ' + (data.error || 'Failed to add user'));
+            }
+        })
+        .catch(error => {
+            alert('❌ Error: ' + error.message);
+        });
+    }
+
+    function editUser(userId) {
+        // Get current user data from the modal or directly
+        closeUserActionsModal();
+        
+        // Fetch user data from the table
+        const row = document.querySelector(`tr[onclick*="showUserActions(${userId}"]`);
+        if (row) {
+            const cells = row.querySelectorAll('td');
+            const username = cells[1].textContent.trim();
+            const roleSpan = cells[2].querySelector('span');
+            const role = roleSpan ? roleSpan.textContent.trim() : 'User';
+            
+            showEditUserModal(userId, username, role);
+        }
+    }
+
+    function deleteUser(userId) {
+        closeUserActionsModal();
+        if (confirm('⚠️ Are you sure you want to delete this user? This cannot be undone!')) {
+            fetch(`/api/delete_user/${userId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✅ ' + data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    alert('❌ Error: ' + (data.error || 'Failed to delete user'));
+                }
+            })
+            .catch(error => {
+                alert('❌ Error: ' + error.message);
+            });
+        }
+    }
+
+    function showEditUserModal(userId, username, role) {
+        const modalHTML = `
+        <div id="editUserModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+                <h3 class="text-2xl font-bold text-slate-900 mb-6">✏️ Edit User</h3>
+                <form onsubmit="submitEditUser(event, ${userId})" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Username</label>
+                        <input type="text" id="editUsername" required placeholder="Enter username" value="${username}" class="w-full px-4 py-2 border-2 border-slate-300 rounded-lg focus:border-red-600 focus:outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Password <span class="text-xs text-slate-500">(Leave blank to keep unchanged)</span></label>
+                        <input type="password" id="editPassword" placeholder="Leave blank to keep current password" class="w-full px-4 py-2 border-2 border-slate-300 rounded-lg focus:border-red-600 focus:outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Role</label>
+                        <select id="editRole" required class="w-full px-4 py-2 border-2 border-slate-300 rounded-lg focus:border-red-600 focus:outline-none text-sm">
+                            <option value="User" ${role === 'User' ? 'selected' : ''}>👤 User</option>
+                            <option value="Engineer" ${role === 'Engineer' ? 'selected' : ''}>🔧 Engineer</option>
+                            <option value="Admin" ${role === 'Admin' ? 'selected' : ''}>👨‍💼 Admin</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-3 mt-8">
+                        <button type="submit" class="flex-1 px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
+                            ✓ Update User
+                        </button>
+                        <button type="button" onclick="closeEditUserModal()" class="flex-1 px-4 py-3 bg-slate-400 text-white font-semibold rounded-lg hover:bg-slate-500 transition">
+                            ← Back
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    function closeEditUserModal() {
+        const modal = document.getElementById('editUserModal');
+        if (modal) modal.remove();
+    }
+
+    function submitEditUser(event, userId) {
+        event.preventDefault();
+        
+        const username = document.getElementById('editUsername').value.trim();
+        const password = document.getElementById('editPassword').value.trim();
+        const role = document.getElementById('editRole').value;
+        
+        if (!username) {
+            alert('❌ Username cannot be empty');
+            return;
+        }
+        
+        if (password && password.length < 6) {
+            alert('❌ Password must be at least 6 characters');
+            return;
+        }
+        
+        const body = {
+            username: username,
+            role: role
+        };
+        
+        if (password) {
+            body.password = password;
+        }
+        
+        fetch(`/api/edit_user/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ ' + data.message);
+                closeEditUserModal();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                alert('❌ Error: ' + (data.error || 'Failed to update user'));
+            }
+        })
+        .catch(error => {
+            alert('❌ Error: ' + error.message);
+        });
+    }
+
+    function deleteVehicle(vehicleId) {
+        if (confirm('Are you sure you want to delete this vehicle?')) {
+            alert('Vehicle deleted');
+        }
+    }
+
+    function filterVehicles() {
+        alert('Filtering vehicles...');
+    }
+
+    function exportData() {
+        window.location.href = '/api/generate_report';
+    }
+
+    function generateReport() {
+        const button = event.target;
+        button.disabled = true;
+        button.innerHTML = '⏳ Generating...';
+        
+        setTimeout(() => {
+            window.location.href = '/api/generate_report';
+            button.disabled = false;
+            button.innerHTML = '📄 Generate Report';
+        }, 1000);
+    }
+
+    function saveSettings() {
+        alert('Settings saved!');
+    }
+
+    function backupDatabase() {
+        alert('Creating backup...');
+    }
+
+    function restoreDatabase() {
+        alert('Restore backup...');
+    }
+
+    function changePassword() {
+        alert('Change password modal');
+    }
+
+    function viewAuditLog() {
+        alert('Viewing audit log...');
+    }
+
+    function resetSystem() {
+        if (confirm('Are you absolutely sure? This cannot be undone!')) {
+            alert('System reset...');
+        }
+    }
+
+    function testEmail() {
+        const button = event.target;
+        button.disabled = true;
+        button.innerHTML = '⏳ Sending...';
+        
+        fetch('/api/test_email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            button.disabled = false;
+            button.innerHTML = '📧 Test Email';
+            
+            if (data.success) {
+                alert('✓ Test email sent successfully to ' + data.recipient);
+            } else {
+                alert('✗ Failed to send test email: ' + data.error);
+            }
+        })
+        .catch(error => {
+            button.disabled = false;
+            button.innerHTML = '📧 Test Email';
+            alert('✗ Error sending test email: ' + error);
+        });
+    }
+
+    // ============ VEHICLE ACTION FUNCTIONS ============
+
+    function startTesting(vehicleId, vehicleName) {
+        if (confirm(`⏩ Start testing for "${vehicleName}"?`)) {
+            fetch(`/test_vehicle/${vehicleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success || response.ok) {
+                    alert('✓ Testing started for ' + vehicleName);
+                    location.reload();
+                } else {
+                    alert('✗ Error: ' + (data.error || 'Failed to start testing'));
+                }
+            })
+            .catch(error => {
+                alert('✗ Error: ' + error.message);
+            });
+        }
+    }
+
+    function completeTest(vehicleId, vehicleName) {
+        if (confirm(`✓ Mark testing as complete for "${vehicleName}"?`)) {
+            fetch(`/test_completed_vehicle/${vehicleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success || response.ok) {
+                    alert('✓ Testing marked as complete for ' + vehicleName);
+                    location.reload();
+                } else {
+                    alert('✗ Error: ' + (data.error || 'Failed to complete testing'));
+                }
+            })
+            .catch(error => {
+                alert('✗ Error: ' + error.message);
+            });
+        }
+    }
+
+    function returnVehicle(vehicleId, vehicleName) {
+        const notes = prompt(`📝 Enter return notes for "${vehicleName}":\n(Optional - leave blank if not needed)`, '');
+        if (notes !== null) {
+            fetch(`/return_vehicle/${vehicleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    return_notes: notes || ''
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success || response.ok) {
+                    alert('✓ Vehicle returned: ' + vehicleName);
+                    location.reload();
+                } else {
+                    alert('✗ Error: ' + (data.error || 'Failed to return vehicle'));
+                }
+            })
+            .catch(error => {
+                alert('✗ Error: ' + error.message);
+            });
+        }
+    }
+
+    function deleteVehicleConfirm(vehicleId, vehicleName) {
+        if (confirm(`⚠️ Delete "${vehicleName}"? This cannot be undone!`)) {
+            fetch(`/api/delete_vehicle/${vehicleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success || response.ok) {
+                    alert('✓ Vehicle deleted: ' + vehicleName);
+                    location.reload();
+                } else {
+                    alert('✗ Error: ' + (data.error || 'Failed to delete vehicle'));
+                }
+            })
+            .catch(error => {
+                alert('✗ Error: ' + error.message);
+            });
+        }
+    }
+</script>
+
+{% endblock %}

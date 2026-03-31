@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BikeVault - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: white;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        
+        .bosch-red {
+            color: #e20015;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- HEADER WITH BOSCH LOGO -->
+    <div class="bg-slate-950 border-b-4 border-red-600 shadow-2xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex flex-col items-center text-center">
+                <!-- BOSCH LOGO -->
+                <img src="{{ url_for('static', filename='bosch.png') }}" alt="Bosch" class="h-16 mb-3">
+                
+                <!-- BIKEVAULT TITLE -->
+                <h1 class="text-4xl font-black text-white mb-1 tracking-tight">BikeVault</h1>
+                
+                <!-- SUBTITLE -->
+                <p class="text-sm font-bold uppercase tracking-widest text-red-500">Two Wheeler & Powersports Testing Centre</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN LOGIN CONTAINER -->
+    <div class="flex-1 flex items-center justify-center px-4 py-12">
+        <div class="w-full max-w-md">
+            <!-- LOGIN CARD -->
+            <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 p-10">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Welcome</h2>
+                    <p class="text-slate-600 text-sm">Sign in to manage your testing vehicles</p>
+                </div>
+
+                <!-- ALERTS -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="mb-6 p-4 rounded-lg border-l-4 text-sm
+                                {% if category == 'error' %}
+                                    bg-red-50 text-red-800 border-red-500
+                                {% else %}
+                                    bg-blue-50 text-blue-800 border-blue-500
+                                {% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- LOGIN FORM -->
+                <form method="POST" class="space-y-5">
+                    <!-- USERNAME -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-900 mb-2.5">👤 Username</label>
+                        <input 
+                            type="text" 
+                            id="username"
+                            name="username" 
+                            placeholder="Enter your username"
+                            required
+                            class="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:border-red-600 focus:ring-2 focus:ring-red-200 focus:outline-none transition text-sm placeholder-slate-400"
+                        >
+                    </div>
+
+                    <!-- PASSWORD -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-900 mb-2.5">🔐 Password</label>
+                        <input 
+                            type="password" 
+                            id="password"
+                            name="password" 
+                            placeholder="Enter your password"
+                            required
+                            class="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:border-red-600 focus:ring-2 focus:ring-red-200 focus:outline-none transition text-sm placeholder-slate-400"
+                        >
+                    </div>
+
+                    <!-- ROLE -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-900 mb-2.5">👔 Role</label>
+                        <select name="role" id="role" required class="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:border-red-600 focus:ring-2 focus:ring-red-200 focus:outline-none transition text-sm appearance-none bg-white cursor-pointer">
+                            <option value="" disabled selected>Select your role</option>
+                            <option value="Admin">👨‍💼 Admin</option>
+                            <option value="Engineer">🔧 Engineer</option>
+                            <option value="User">👤 User</option>
+                        </select>
+                    </div>
+
+                    <!-- LOGIN BUTTON -->
+                    <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-red-600 to-red-700 text-white font-bold uppercase tracking-wider rounded-lg hover:from-red-700 hover:to-red-800 transition text-sm mt-8 shadow-lg">
+                        🔓 Sign In
+                    </button>
+                </form>
+
+                <!-- FORGOT PASSWORD LINK -->
+                <div class="text-center mt-6">
+                    <a href="{{ url_for('routes.forgot') }}" class="text-sm text-red-600 hover:text-red-700 font-semibold hover:underline">🔐 Forgot Password?</a>
+                </div>
+
+                <!-- SEPARATOR -->
+                <div class="flex items-center gap-3 my-8">
+                    <div class="flex-1 h-px bg-slate-300"></div>
+                    <span class="text-xs text-slate-500 font-semibold">Demo Credentials</span>
+                    <div class="flex-1 h-px bg-slate-300"></div>
+                </div>
+
+                <!-- DEMO ACCOUNTS -->
+                <div class="space-y-3">
+                    <button type="button" onclick="fillDemo('admin', 'admin123', 'Admin')" class="w-full p-3.5 bg-gradient-to-r from-slate-100 to-slate-50 hover:from-slate-200 hover:to-slate-100 border-2 border-slate-300 rounded-lg transition text-center hover:border-red-300">
+                        <p class="font-semibold text-slate-900 text-sm">👨‍💼 Admin</p>
+                        <p class="text-xs text-slate-600 mt-1">admin / admin123</p>
+                    </button>
+                    <button type="button" onclick="fillDemo('eng', 'eng123', 'Engineer')" class="w-full p-3.5 bg-gradient-to-r from-slate-100 to-slate-50 hover:from-slate-200 hover:to-slate-100 border-2 border-slate-300 rounded-lg transition text-center hover:border-red-300">
+                        <p class="font-semibold text-slate-900 text-sm">🔧 Engineer</p>
+                        <p class="text-xs text-slate-600 mt-1">eng / eng123</p>
+                    </button>
+                    <button type="button" onclick="fillDemo('user', 'user123', 'User')" class="w-full p-3.5 bg-gradient-to-r from-slate-100 to-slate-50 hover:from-slate-200 hover:to-slate-100 border-2 border-slate-300 rounded-lg transition text-center hover:border-red-300">
+                        <p class="font-semibold text-slate-900 text-sm">👤 User</p>
+                        <p class="text-xs text-slate-600 mt-1">user / user123</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="mt-12 text-center">
+                <p class="text-sm text-slate-400">
+                    © 2026 BikeVault Testing Centre. <span class="font-semibold text-slate-300">Invented for life</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function fillDemo(username, password, role) {
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = password;
+            document.getElementById('role').value = role;
+        }
+    </script>
+</body>
+</html>

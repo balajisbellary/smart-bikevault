@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .edit-container {
+        padding: 30px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .edit-header {
+        background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .edit-header h2 {
+        margin: 0;
+        font-size: 28px;
+    }
+
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .section {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .section h3 {
+        margin: 0 0 20px 0;
+        font-size: 20px;
+        font-weight: 800;
+        color: #1f2937;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #f3f4f6;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        font-weight: 700;
+        color: #6b7280;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-control {
+        padding: 14px;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #dc2626;
+        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+        background: #fef2f2;
+    }
+
+    .image-preview {
+        margin-top: 16px;
+    }
+
+    .image-preview img {
+        max-width: 300px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 30px;
+    }
+
+    .btn {
+        padding: 14px 28px;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: #1f2937;
+        border: 2px solid #e5e7eb;
+        text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+        border-color: #dc2626;
+        color: #dc2626;
+    }
+
+    @media (max-width: 768px) {
+        .edit-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .btn-group {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="edit-container">
+    <a href="/vehicle/{{ v.id }}" class="back-btn">← Back to Vehicle</a>
+
+    <div class="edit-header">
+        <h2>✏️ Edit Vehicle</h2>
+        <p style="margin: 0; opacity: 0.9;">{{ v.name }}</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        <!-- BASIC INFORMATION -->
+        <div class="section">
+            <h3>📋 Basic Information</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Vehicle Name *</label>
+                    <input type="text" name="name" class="form-control" value="{{ v.name }}" required>
+                </div>
+                <div class="form-group">
+                    <label>RC Number *</label>
+                    <input type="text" name="rc" class="form-control" value="{{ v.rc }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Chassis Number *</label>
+                    <input type="text" name="chassis" class="form-control" value="{{ v.chassis }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Engine Number</label>
+                    <input type="text" name="engine" class="form-control" value="{{ v.engine or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Owner</label>
+                    <input type="text" name="owner" class="form-control" value="{{ v.owner or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Received On *</label>
+                    <input type="date" name="received_on" class="form-control" value="{{ v.received_on }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Bike Model</label>
+                    <input type="text" name="bike" class="form-control" value="{{ v.bike or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Number Plate</label>
+                    <input type="text" name="number_plate" class="form-control" value="{{ v.number_plate or '' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- TECHNICAL SPECIFICATIONS -->
+        <div class="section">
+            <h3>⚙️ Technical Specifications</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Engine CC</label>
+                    <input type="text" name="cc" class="form-control" value="{{ v.cc or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Gears</label>
+                    <input type="text" name="gears" class="form-control" value="{{ v.gears or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Inertia</label>
+                    <input type="text" name="inertia" class="form-control" value="{{ v.inertia or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Road Load A</label>
+                    <input type="text" name="road_a" class="form-control" value="{{ v.road_a or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Road Load B</label>
+                    <input type="text" name="road_b" class="form-control" value="{{ v.road_b or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Road Load C</label>
+                    <input type="text" name="road_c" class="form-control" value="{{ v.road_c or '' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- FLUIDS & LUBRICANTS -->
+        <div class="section">
+            <h3>🛢️ Fluids & Lubricants</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Fuel Type</label>
+                    <input type="text" name="fuel" class="form-control" value="{{ v.fuel or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Oil Grade</label>
+                    <input type="text" name="oil" class="form-control" value="{{ v.oil or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Coolant Grade</label>
+                    <input type="text" name="coolant" class="form-control" value="{{ v.coolant or '' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- PROJECT TIMELINE -->
+        <div class="section">
+            <h3>📅 Project Timeline</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ v.start_date or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ v.end_date or '' }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- IMAGE -->
+        <div class="section">
+            <h3>📸 Vehicle Image</h3>
+            <div class="form-group">
+                <label>Upload New Image</label>
+                <input type="file" name="image" class="form-control" accept="image/*">
+                <small style="color: #6b7280; margin-top: 8px;">Supported formats: PNG, JPG, JPEG, GIF, WebP</small>
+            </div>
+            {% if v.image %}
+            <div class="image-preview">
+                <p style="font-weight: 600; margin-bottom: 12px;">Current Image:</p>
+                <img src="/static/uploads/{{ v.image }}" alt="{{ v.name }}">
+                <div style="margin-top: 12px; display: flex; gap: 8px;">
+                    <button type="button" onclick="deleteVehicleImageEditPage({{ v.id }})" style="padding: 8px 16px; background-color: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;" title="Delete this image">
+                        🗑️ Delete Image
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- INSURANCE & DOCUMENTS -->
+        <div class="section">
+            <h3>📋 Insurance & Documents</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Insurance Details</label>
+                    <input type="text" name="insurance" class="form-control" value="{{ v.insurance or '' }}" placeholder="Insurance company & policy number">
+                </div>
+                <div class="form-group">
+                    <label>Insurance Document</label>
+                    <input type="file" name="insurance_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                    {% if v.insurance_file %}
+                    <small style="color: #10b981; margin-top: 8px;">📁 <a href="/static/uploads/{{ v.insurance_file }}" target="_blank" style="color: #10b981; text-decoration: underline;">Current file</a></small>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label>RC Card Image</label>
+                    <input type="file" name="rc_card" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                    {% if v.rc_card %}
+                    <small style="color: #10b981; margin-top: 8px;">📁 <a href="/static/uploads/{{ v.rc_card }}" target="_blank" style="color: #10b981; text-decoration: underline;">Current file</a></small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+            <a href="/vehicle/{{ v.id }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Delete vehicle image from edit page
+    function deleteVehicleImageEditPage(vehicleId) {
+        if (confirm('⚠️ Are you sure you want to delete this image? This cannot be undone!')) {
+            fetch(`/api/delete_vehicle_image/${vehicleId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('✓ Image deleted successfully');
+                    location.reload();
+                } else {
+                    alert('✗ Error: ' + (data.error || 'Failed to delete image'));
+                }
+            })
+            .catch(error => {
+                alert('✗ Error: ' + error.message);
+            });
+        }
+    }
+</script>
+
+{% endblock %}
