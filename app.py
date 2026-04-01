@@ -5,7 +5,6 @@ from routes import routes
 from config import config
 from email_service import mail
 from io import BytesIO
-import qrcode
 from datetime import datetime, timedelta
 from sqlalchemy import func
 import os
@@ -360,57 +359,44 @@ def generate_report():
         print(f"Report generation error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# ===== QR CODE ROUTES =====
+# ===== QR CODE ROUTES (Using Online API - No Pillow Needed) =====
 @app.route('/vehicle_qr/<int:vehicle_id>')
 def vehicle_qr(vehicle_id):
+    """Generate QR code using online API and redirect to it"""
     vehicle = Vehicle.query.get_or_404(vehicle_id)
-    
     qr_data = f"{request.host_url.rstrip('/')}vehicle/{vehicle_id}"
     
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=15,
-        border=3,
-    )
-    qr.add_data(qr_data)
-    qr.make(fit=True)
+    # Use QR Server API (free, no dependencies needed)
+    import urllib.parse
+    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={urllib.parse.quote(qr_data)}"
     
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    img_io = BytesIO()
-    img.save(img_io, 'PNG')
-    img_io.seek(0)
-    
-    return send_file(img_io, mimetype='image/png', as_attachment=False)
+    return redirect(qr_url)
 
 @app.route('/download_qr/<int:vehicle_id>')
 def download_qr(vehicle_id):
-    vehicle = Vehicle.query.get_or_404(vehicle_id)
+    """Download QR code using online API"""
+    import urllib.request
+    import urllib.parse
     
+    vehicle = Vehicle.query.get_or_404(vehicle_id)
     qr_data = f"{request.host_url.rstrip('/')}vehicle/{vehicle_id}"
     
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=15,
-        border=3,
-    )
-    qr.add_data(qr_data)
-    qr.make(fit=True)
+    # Use QR Server API
+    qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={urllib.parse.quote(qr_data)}"
     
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    img_io = BytesIO()
-    img.save(img_io, 'PNG')
-    img_io.seek(0)
-    
-    return send_file(
-        img_io,
-        mimetype='image/png',
-        as_attachment=True,
-        download_name=f'QR_Vehicle_{vehicle.name}_{vehicle_id}.png'
-    )
+    try:
+        # Download QR code image
+        response = urllib.request.urlopen(qr_url)
+        img_io = BytesIO(response.read())
+        
+        return send_file(
+            img_io,
+            mimetype='image/png',
+            as_attachment=True,
+            download_name=f'QR_Vehicle_{vehicle.name}_{vehicle_id}.png'
+        )
+    except Exception as e:
+        return jsonify({'error': 'Failed to generate QR code'}), 500
 
 @app.route('/api/vehicle/<int:vehicle_id>')
 def get_vehicle_json(vehicle_id):
