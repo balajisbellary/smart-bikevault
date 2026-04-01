@@ -137,9 +137,7 @@
                         <a href="/vehicle/{{ v.id }}" class="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700 transition">
                             View
                         </a>
-                        <button type="button" onclick="showQRModal({{ v.id }}, '{{ v.name }}')" class="px-3 py-1 bg-bosch-red text-white text-xs font-semibold rounded hover:bg-red-700 transition">
-                            QR Code
-                        </button>
+                        <button type="button" onclick="showQRModal({{ v.id }}, '{{ v.name }}')" class="px-3 py-1 bg-bosch-red text-white text-xs font-semibold rounded hover:bg-red-700 transition whitespace-nowrap" style="min-width: 80px;">QR Code</button>
                     </div>
                 </td>
             </tr>
