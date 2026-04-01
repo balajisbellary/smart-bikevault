@@ -1,13 +1,19 @@
 """RC Card OCR Processing Module"""
 
-import easyocr
-import cv2
-import numpy as np
 import re
 from io import BytesIO
 
-# Initialize OCR reader (cached for performance)
-reader = easyocr.Reader(['en'], gpu=False)
+# These are optional - only imported when RC extraction is needed
+reader = None
+
+
+def _initialize_ocr():
+    """Initialize OCR reader (lazy loading)"""
+    global reader
+    if reader is None:
+        import easyocr
+        reader = easyocr.Reader(['en'], gpu=False)
+    return reader
 
 
 def extract_text_from_rc_image(image_path):
@@ -21,13 +27,19 @@ def extract_text_from_rc_image(image_path):
         dict: Extracted text and confidence scores
     """
     try:
+        import cv2
+        import numpy as np
+        
+        # Initialize OCR (lazy load)
+        ocr = _initialize_ocr()
+        
         # Read image
         image = cv2.imread(image_path)
         if image is None:
             return {'error': 'Could not read image', 'text': ''}
         
         # Extract text using EasyOCR
-        results = reader.readtext(image)
+        results = ocr.readtext(image)
         
         # Format results
         extracted_text = '\n'.join([text[1] for text in results])
