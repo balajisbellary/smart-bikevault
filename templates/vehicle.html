@@ -825,7 +825,7 @@
             <h3>📥 Vehicle Received</h3>
             <div class="detail-row">
                 <div class="detail-item">
-                    <div class="detail-label">Vehicle Name</div>
+                    <div class="detail-label">MFR (Manufacturer)</div>
                     <div class="detail-value">{{ v.name }}</div>
                 </div>
                 <div class="detail-item">
@@ -835,6 +835,14 @@
                 <div class="detail-item">
                     <div class="detail-label">Received On</div>
                     <div class="detail-value">{{ v.received_on }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">REG Date</div>
+                    <div class="detail-value">{{ v.reg_date if v.reg_date else 'Not Specified' }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">MFG Date</div>
+                    <div class="detail-value">{{ v.mfg_date if v.mfg_date else 'Not Specified' }}</div>
                 </div>
             </div>
         </div>

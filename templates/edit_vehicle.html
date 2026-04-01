@@ -181,7 +181,7 @@
             <h3>📋 Basic Information</h3>
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Vehicle Name *</label>
+                    <label>MFR (Manufacturer) *</label>
                     <input type="text" name="name" class="form-control" value="{{ v.name }}" required>
                 </div>
                 <div class="form-group">
@@ -209,8 +209,12 @@
                     <input type="text" name="bike" class="form-control" value="{{ v.bike or '' }}">
                 </div>
                 <div class="form-group">
-                    <label>Number Plate</label>
-                    <input type="text" name="number_plate" class="form-control" value="{{ v.number_plate or '' }}">
+                    <label>REG Date (Registration Date)</label>
+                    <input type="date" name="reg_date" class="form-control" value="{{ v.reg_date or '' }}">
+                </div>
+                <div class="form-group">
+                    <label>MFG Date (Manufacturing Date)</label>
+                    <input type="date" name="mfg_date" class="form-control" value="{{ v.mfg_date or '' }}">
                 </div>
             </div>
         </div>

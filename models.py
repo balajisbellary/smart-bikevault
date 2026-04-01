@@ -34,6 +34,8 @@ class Vehicle(db.Model):
     bike = db.Column(db.String(100))
     insurance = db.Column(db.String(200))
     number_plate = db.Column(db.String(50))
+    reg_date = db.Column(db.String(20))
+    mfg_date = db.Column(db.String(20))
     rc_card = db.Column(db.String(200))
     insurance_file = db.Column(db.String(200))
     return_image = db.Column(db.String(200))
