@@ -417,4 +417,8 @@ def get_vehicle_json(vehicle_id):
     })
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Get port from environment variable or default to 5000
+    port = int(os.getenv('PORT', 5000))
+    # For production, don't use debug mode
+    debug = os.getenv('FLASK_ENV') == 'development'
+    app.run(host='0.0.0.0', port=port, debug=debug)
