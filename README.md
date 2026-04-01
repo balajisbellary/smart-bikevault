@@ -1,5 +1,11 @@
 # 🏍️ Smart BikeVault - Vehicle Testing & Inventory Management System
 
+## 🌐 Live Application
+
+**[🚀 Live Demo](https://web-production-02de4.up.railway.app/)** - Click to access the deployed application
+- **Login Credentials**: Username: `admin` | Password: `admin123`
+- **Status**: ✅ Production Ready & Deployed on Railway.app
+
 ## 📌 Project Overview
 
 **Smart BikeVault** is a comprehensive web-based application designed for managing vehicle (bike) testing operations and inventory tracking. The system provides real-time monitoring, QR code-based vehicle tracking, role-based access control, and automated workflow management for testing facilities.
@@ -122,7 +128,65 @@ smart-bikevault/
 
 ---
 
-## 📖 Usage Guide
+## � Deployment Guide
+
+### Production Deployment on Railway.app
+
+This application is configured for seamless deployment on Railway.app with zero-dependency QR code generation.
+
+#### Key Production Features
+- ✅ **Environment-based Configuration**: Automatically adapts to production/development environments
+- ✅ **Dynamic Port Binding**: Reads PORT from environment variables (Railway standard)
+- ✅ **Dependency-Free QR Generation**: Uses QR Server API - no Pillow or local image libraries needed
+- ✅ **Lazy-Loaded OCR**: Heavy ML libraries only load when actually used
+- ✅ **Database Flexibility**: Supports SQLite (dev), PostgreSQL, MySQL (production)
+
+#### Deployment Steps
+
+1. **Push to GitHub**
+   ```bash
+   git add .
+   git commit -m "Production Ready"
+   git push origin main
+   ```
+
+2. **Connect to Railway**
+   - Visit [Railway.app](https://railway.app)
+   - Click "New Project" → "Deploy from GitHub"
+   - Select your repository
+   - Railway auto-detects Procfile and runtime.txt
+
+3. **Add Environment Variables** (if needed)
+   - `FLASK_ENV=production`
+   - `DATABASE_URL=postgresql://...` (for production DB)
+   - Mail credentials for email notifications
+
+4. **Auto-Deploy**
+   - Railway automatically deploys on every GitHub push
+   - View logs in Railway dashboard
+   - Automatic HTTPS SSL certificate
+
+#### Production Configuration Files
+
+**Procfile** - Tells Railway how to run the app:
+```
+web: gunicorn app:app
+```
+
+**runtime.txt** - Specifies Python version:
+```
+python-3.11.7
+```
+
+#### Current Deployment Status
+- **URL**: https://web-production-02de4.up.railway.app/
+- **Server**: Railway.app
+- **Status**: ✅ Live & Running
+- **Auto-Deploy**: Enabled (GitHub webhook integration)
+
+---
+
+## �📖 Usage Guide
 
 ### User Roles
 
