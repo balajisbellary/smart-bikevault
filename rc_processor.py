@@ -1,10 +1,39 @@
 """RC Card OCR Processing Module"""
 
 import re
+import os
 from io import BytesIO
 
 # These are optional - only imported when RC extraction is needed
 reader = None
+
+def extract_text_from_pdf(pdf_path):
+    """
+    Extract text from PDF file
+    
+    Args:
+        pdf_path (str): Path to the PDF file
+    
+    Returns:
+        dict: Extracted text from PDF
+    """
+    try:
+        import PyPDF2
+        
+        extracted_text = ""
+        with open(pdf_path, 'rb') as file:
+            reader_pdf = PyPDF2.PdfReader(file)
+            for page in reader_pdf.pages:
+                extracted_text += page.extract_text() + "\n"
+        
+        return {
+            'success': True,
+            'text': extracted_text,
+            'confidence': 0.9,  # PDFs are generally more reliable
+            'source': 'pdf'
+        }
+    except Exception as e:
+        return {'success': False, 'error': str(e), 'text': '', 'source': 'pdf'}
 
 
 def _initialize_ocr():
@@ -18,14 +47,17 @@ def _initialize_ocr():
 
 def extract_text_from_rc_image(image_path):
     """
-    Extract all text from RC card image using OCR
+    Extract all text from RC card image using OCR or PDF extraction
     
     Args:
-        image_path (str): Path to the RC card image
+        image_path (str): Path to the RC card image or PDF file
     
     Returns:
         dict: Extracted text and confidence scores
     """
+    # Check if file is PDF
+    if image_path.lower().endswith('.pdf'):
+        return extract_text_from_pdf(image_path)
     try:
         import cv2
         import numpy as np

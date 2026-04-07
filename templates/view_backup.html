@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}View Backup - BikeVault{% endblock %}
+
+{% block content %}
+
+<!-- BACK BUTTON -->
+<a href="/dashboard" style="display: inline-flex; align-items: center; gap: 8px; color: #dc2626; text-decoration: none; font-weight: 600; font-size: 15px; padding: 12px 16px; border-radius: 8px; background: rgba(220, 38, 38, 0.1); margin-bottom: 24px; border: none; transition: all 0.25s ease;">
+    ← Back to Dashboard
+</a>
+
+<!-- PAGE HEADER -->
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900">📊 View Backup Data</h1>
+    <p class="text-slate-600 text-sm mt-1">All vehicles, activities, and instrumentation from backup Excel file</p>
+</div>
+
+<!-- BACKUP INFO BANNER -->
+<div style="background: #e0f2fe; border-left: 4px solid #0ea5e9; padding: 16px; border-radius: 8px; margin-bottom: 24px;">
+    <div style="display: flex; gap: 12px; align-items: flex-start;">
+        <span style="font-size: 20px;">ℹ️</span>
+        <div>
+            <p style="font-weight: 600; color: #0c4a6e; margin: 0;">Emergency Backup Data</p>
+            <p style="color: #075985; font-size: 14px; margin: 5px 0 0 0;">This view shows all data from your backup Excel file with 3 sheets: Vehicles, Activities, and Instrumentation.</p>
+        </div>
+    </div>
+</div>
+
+<!-- TABS -->
+<div style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 2px solid #e2e8f0;">
+    <button onclick="switchViewTab('vehicles')" id="tab-vehicles" style="padding: 12px 20px; border: none; background: none; color: #dc2626; font-weight: 600; cursor: pointer; border-bottom: 3px solid #dc2626; margin-bottom: -2px;">
+        🚗 Vehicles
+    </button>
+    <button onclick="switchViewTab('activities')" id="tab-activities" style="padding: 12px 20px; border: none; background: none; color: #999; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;">
+        📝 Activities
+    </button>
+    <button onclick="switchViewTab('instrumentation')" id="tab-instrumentation" style="padding: 12px 20px; border: none; background: none; color: #999; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;">
+        🔧 Instrumentation
+    </button>
+</div>
+
+<!-- RESTORE & DOWNLOAD BUTTONS -->
+<div class="mb-6 flex gap-4">
+    <form method="POST" action="/restore_backup" style="display: inline;">
+        <button type="submit" onclick="return confirm('⚠️ WARNING: This will replace all current database data with backup data. Are you sure?');" class="px-6 py-3 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 transition text-sm">
+            ⚠️ Restore All Data
+        </button>
+    </form>
+    <a href="/download_backup" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition text-sm" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+        📥 Download Excel
+    </a>
+</div>
+
+<!-- VEHICLES TAB -->
+<div id="vehicles-content" style="display: block;">
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+            <h3 class="font-semibold text-slate-900">Total Vehicles: {{ total }}</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-50 border-b border-slate-200 sticky top-0">
+                    <tr>
+                        <th class="px-6 py-4 text-left font-semibold text-slate-700">Name</th>
+                        <th class="px-6 py-4 text-left font-semibold text-slate-700">RC</th>
+                        <th class="px-6 py-4 text-left font-semibold text-slate-700">Owner</th>
+                        <th class="px-6 py-4 text-left font-semibold text-slate-700">Model</th>
+                        <th class="px-6 py-4 text-left font-semibold text-slate-700">Status</th>
+                        <th class="px-6 py-4 text-left font-semibold text-slate-700">Fuel</th>
+                        <th class="px-6 py-4 text-left font-semibold text-slate-700">CC</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% if vehicles %}
+                        {% for vehicle in vehicles %}
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="px-6 py-4 text-slate-900 font-semibold">{{ vehicle.get('Vehicle Name', 'N/A') }}</td>
+                            <td class="px-6 py-4 text-slate-700">{{ vehicle.get('RC Number', 'N/A') }}</td>
+                            <td class="px-6 py-4 text-slate-700">{{ vehicle.get('Owner', 'N/A') }}</td>
+                            <td class="px-6 py-4 text-slate-700">{{ vehicle.get('Bike Model', 'N/A') }}</td>
+                            <td class="px-6 py-4">
+                                <span style="display: inline-flex; align-items: center; padding: 4px 8px; background: {% if vehicle.get('Status') == 'Returned' %}#dcfce7{% elif vehicle.get('Status') == 'In Testing' %}#e0e7ff{% else %}#fef3c7{% endif %}; color: {% if vehicle.get('Status') == 'Returned' %}#166534{% elif vehicle.get('Status') == 'In Testing' %}#3730a3{% else %}#92400e{% endif %}; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                                    {{ vehicle.get('Status', 'N/A') }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-slate-700">{{ vehicle.get('Fuel Type', 'N/A') }}</td>
+                            <td class="px-6 py-4 text-slate-700">{{ vehicle.get('CC', 'N/A') }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-8 text-center text-slate-500">
+                                <p style="font-size: 16px; margin: 0;">📁 No vehicle backup data found</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ACTIVITIES TAB -->
+<div id="activities-content" style="display: none;">
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+            <h3 class="font-semibold text-slate-900">Activity Log</h3>
+        </div>
+        <div class="space-y-4 p-6">
+            <div class="text-center text-slate-600">
+                <p>📝 Activities data is automatically updated when vehicles are added, edited, or logged.</p>
+                <p style="margin-top: 12px; font-size: 14px;">Use "💾 Download Excel" to see the Activities sheet with all entries.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- INSTRUMENTATION TAB -->
+<div id="instrumentation-content" style="display: none;">
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+            <h3 class="font-semibold text-slate-900">Instrumentation Records</h3>
+        </div>
+        <div class="space-y-4 p-6">
+            <div class="text-center text-slate-600">
+                <p>🔧 Instrumentation data is automatically updated when you add or modify instrumentation records.</p>
+                <p style="margin-top: 12px; font-size: 14px;">Use "💾 Download Excel" to see the Instrumentation sheet with all records.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STATS SECTION -->
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8">
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+        <p class="text-slate-600 text-xs font-semibold uppercase">Backup File</p>
+        <p class="text-sm font-semibold text-slate-900 mt-2">vehicles_backup.xlsx</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+        <p class="text-slate-600 text-xs font-semibold uppercase">Sheets</p>
+        <p class="text-sm font-semibold text-slate-900 mt-2">3 Sheets</p>
+        <p style="font-size: 12px; color: #999; margin: 5px 0 0 0;">Vehicles, Activities, Instrumentation</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+        <p class="text-slate-600 text-xs font-semibold uppercase">Status</p>
+        <p class="text-sm font-semibold text-green-600 mt-2">✅ Active</p>
+    </div>
+</div>
+
+<!-- HELP SECTION -->
+<div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-8">
+    <h3 class="font-semibold text-slate-900 mb-3">💡 Emergency Recovery Guide</h3>
+    <ul style="list-style: none; padding: 0; margin: 0;">
+        <li style="margin: 10px 0; padding-left: 24px; position: relative;">
+            <span style="position: absolute; left: 0;">1.</span>
+            <strong>View Data:</strong> Click tabs above to view Vehicles, Activities, or Instrumentation. Full data in Excel sheets.
+        </li>
+        <li style="margin: 10px 0; padding-left: 24px; position: relative;">
+            <span style="position: absolute; left: 0;">2.</span>
+            <strong>Download Excel:</strong> Click "💾 Download Backup" to save complete backup to your computer.
+        </li>
+        <li style="margin: 10px 0; padding-left: 24px; position: relative;">
+            <span style="position: absolute; left: 0;">3.</span>
+            <strong>3 Sheets Included:</strong> Backup contains all Vehicles, Activities logs, and Instrumentation records.
+        </li>
+        <li style="margin: 10px 0; padding-left: 24px; position: relative;">
+            <span style="position: absolute; left: 0;">4.</span>
+            <strong>Restore Everything:</strong> Click "⚠️ Restore All Data" to restore all data from backup (replaces current data).
+        </li>
+        <li style="margin: 10px 0; padding-left: 24px; position: relative;">
+            <span style="position: absolute; left: 0;">5.</span>
+            <strong>Auto-Update:</strong> All changes (add/edit/delete) automatically update the backup Excel.
+        </li>
+    </ul>
+</div>
+
+<script>
+function switchViewTab(tab) {
+    // Hide all content
+    document.getElementById('vehicles-content').style.display = 'none';
+    document.getElementById('activities-content').style.display = 'none';
+    document.getElementById('instrumentation-content').style.display = 'none';
+    
+    // Remove active styling
+    document.getElementById('tab-vehicles').style.color = '#999';
+    document.getElementById('tab-vehicles').style.borderBottomColor = 'transparent';
+    document.getElementById('tab-activities').style.color = '#999';
+    document.getElementById('tab-activities').style.borderBottomColor = 'transparent';
+    document.getElementById('tab-instrumentation').style.color = '#999';
+    document.getElementById('tab-instrumentation').style.borderBottomColor = 'transparent';
+    
+    // Show selected content
+    if (tab === 'vehicles') {
+        document.getElementById('vehicles-content').style.display = 'block';
+        document.getElementById('tab-vehicles').style.color = '#dc2626';
+        document.getElementById('tab-vehicles').style.borderBottomColor = '#dc2626';
+    } else if (tab === 'activities') {
+        document.getElementById('activities-content').style.display = 'block';
+        document.getElementById('tab-activities').style.color = '#0ea5e9';
+        document.getElementById('tab-activities').style.borderBottomColor = '#0ea5e9';
+    } else if (tab === 'instrumentation') {
+        document.getElementById('instrumentation-content').style.display = 'block';
+        document.getElementById('tab-instrumentation').style.color = '#059669';
+        document.getElementById('tab-instrumentation').style.borderBottomColor = '#059669';
+    }
+}
+</script>
+
+{% endblock %}

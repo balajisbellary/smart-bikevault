@@ -10,10 +10,11 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from io import BytesIO
 from email_utils import send_email
 from rc_processor import process_rc_card
+from excel_backup import add_vehicle_to_backup, backup_vehicles_to_excel, read_backup_data, restore_from_backup, backup_all_data, auto_update_backup
 
 routes = Blueprint('routes', __name__)
 UPLOAD_FOLDER = "static/uploads"
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'pdf'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -92,13 +93,15 @@ def forgot():
 @routes.route('/dashboard')
 @login_required
 def dashboard():
-    search = request.args.get('search', '')
+    search = request.args.get('search', '').strip().lower()
 
     if search:
+        # Use ilike for case-insensitive search (works with SQLite and PostgreSQL)
         vehicles = Vehicle.query.filter(
-            (Vehicle.name.contains(search)) |
-            (Vehicle.rc.contains(search)) |
-            (Vehicle.chassis.contains(search))
+            (Vehicle.name.ilike(f'%{search}%')) |
+            (Vehicle.rc.ilike(f'%{search}%')) |
+            (Vehicle.chassis.ilike(f'%{search}%')) |
+            (Vehicle.owner.ilike(f'%{search}%'))
         ).all()
     else:
         vehicles = Vehicle.query.all()
@@ -309,6 +312,9 @@ def receive():
         )
         db.session.add(v)
         db.session.commit()
+        
+        # Auto-update backup Excel with all data
+        auto_update_backup(db)
 
         inst = Instrumentation(
             vehicle_id=v.id,
@@ -440,6 +446,10 @@ def edit_vehicle(id):
             v.insurance_file = ins_filename
         
         db.session.commit()
+        
+        # Auto-update backup Excel with all data
+        auto_update_backup(db)
+        
         log_activity(v.id, f"Vehicle {v.name} updated by {current_user.username}")
         flash(f"Vehicle {v.name} updated successfully", "success")
         return redirect(f'/vehicle/{id}')
@@ -479,6 +489,9 @@ def delete_vehicle(id):
     vehicle_name = v.name
     db.session.delete(v)
     db.session.commit()
+    
+    # Auto-update backup Excel with all data
+    auto_update_backup(db)
     
     log_activity(0, f"Vehicle {vehicle_name} deleted by {current_user.username}")
     flash(f"Vehicle {vehicle_name} deleted successfully", "success")
@@ -595,6 +608,68 @@ def export_vehicle(id):
     )
 
 
+# ================= DOWNLOAD VEHICLES BACKUP =================
+@routes.route('/download_backup')
+@login_required
+def download_backup():
+    """Download all vehicles backup Excel file"""
+    if current_user.role != "Admin":
+        flash("Access denied. Only admins can download backups.", "error")
+        return redirect('/dashboard')
+    
+    backup_file = "backups/vehicles_backup.xlsx"
+    
+    if not os.path.exists(backup_file):
+        # Create backup if it doesn't exist
+        backup_vehicles_to_excel(db)
+    
+    if not os.path.exists(backup_file):
+        flash("Backup file not found", "error")
+        return redirect('/dashboard')
+    
+    log_activity(0, f"Backup downloaded by {current_user.username}")
+    
+    return send_file(
+        backup_file,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f"vehicles_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    )
+
+
+# ================= VIEW BACKUP DATA =================
+@routes.route('/view_backup')
+@login_required
+def view_backup():
+    """View all vehicles from backup Excel file"""
+    if current_user.role != "Admin":
+        flash("Access denied. Only admins can view backup.", "error")
+        return redirect('/dashboard')
+    
+    backup_data = read_backup_data()
+    return render_template('view_backup.html', vehicles=backup_data, total=len(backup_data))
+
+
+# ================= RESTORE FROM BACKUP =================
+@routes.route('/restore_backup', methods=['POST'])
+@login_required
+def restore_backup():
+    """Restore all vehicles from backup Excel file"""
+    if current_user.role != "Admin":
+        flash("Access denied. Only admins can restore backup.", "error")
+        return redirect('/dashboard')
+    
+    success, message = restore_from_backup(db)
+    
+    if success:
+        flash(message, "success")
+        log_activity(0, f"Database restored from backup by {current_user.username}")
+    else:
+        flash(message, "error")
+    
+    return redirect('/dashboard')
+
+
 # ================= ADD INSTRUMENTATION =================
 @routes.route('/add_inst/<int:id>', methods=['POST'])
 @login_required
@@ -602,6 +677,9 @@ def add_inst(id):
     inst = Instrumentation(vehicle_id=id, **request.form)
     db.session.add(inst)
     db.session.commit()
+    
+    # Auto-update backup Excel with all data
+    auto_update_backup(db)
     
     v = Vehicle.query.get(id)
     log_activity(id, f"Instrumentation added by {current_user.username}")
@@ -621,6 +699,10 @@ def add_activity(id):
     )
     db.session.add(activity)
     db.session.commit()
+    
+    # Auto-update backup Excel with all data
+    auto_update_backup(db)
+    
     flash("Activity logged successfully", "success")
     return redirect(f'/vehicle/{id}')
 

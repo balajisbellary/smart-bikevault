@@ -36,34 +36,42 @@ app.register_blueprint(routes)
 with app.app_context():
     db.create_all()
 
-    try:
-        if not User.query.first():
+    # Create default users if they don't exist
+    if not User.query.first():
+        try:
             db.session.add(User(username="admin", password="admin123", role="Admin"))
             db.session.add(User(username="user", password="user123", role="User"))
             db.session.add(User(username="eng", password="eng123", role="Engineer"))
             db.session.commit()
+            print("✓ Default users created successfully")
+        except Exception as e:
+            print(f"ℹ️ Users already exist: {str(e)}")
+            db.session.rollback()
 
-        if not Vehicle.query.first():
+    # Create demo vehicles ONLY if no vehicles exist
+    if Vehicle.query.count() == 0:
+        try:
             db.session.add(Vehicle(
                 name="Pulsar NS200",
                 rc="KA-01-AB-1234",
                 chassis="MBLHA10EJ8M123456",
                 owner="Bajaj",
                 received_on="2026-02-26",
-            status="In Testing"
-        ))
-        db.session.add(Vehicle(
-            name="Classic 350",
-            rc="MH-12-CD-5678",
-            chassis="MBLHA10EJ8M789012",
-            owner="Royal Enfield",
-            received_on="2026-01-15",
-            status="Returned"
-        ))
-        db.session.commit()
-    except Exception as e:
-        print(f"ℹ️ Database initialization info: {str(e)}")
-        db.session.rollback()
+                status="In Testing"
+            ))
+            db.session.add(Vehicle(
+                name="Classic 350",
+                rc="MH-12-CD-5678",
+                chassis="MBLHA10EJ8M789012",
+                owner="Royal Enfield",
+                received_on="2026-01-15",
+                status="Returned"
+            ))
+            db.session.commit()
+            print("✓ Demo vehicles created successfully")
+        except Exception as e:
+            print(f"ℹ️ Demo vehicles initialization info: {str(e)}")
+            db.session.rollback()
 
 # ===== ADMIN PANEL =====
 # (Admin route now handled by routes.py blueprint for consistency)
