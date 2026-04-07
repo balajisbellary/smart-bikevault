@@ -284,6 +284,8 @@ def receive():
             coolant=request.form.get('coolant'),
             start_date=request.form.get('start_date'),
             end_date=request.form.get('end_date'),
+            reg_date=request.form.get('reg_date'),
+            mfg_date=request.form.get('mfg_date'),
             image=filename,
             bike=request.form.get('bike'),
             insurance=request.form.get('insurance'),
@@ -403,6 +405,8 @@ def edit_vehicle(id):
         v.coolant = request.form.get('coolant')
         v.start_date = request.form.get('start_date')
         v.end_date = request.form.get('end_date')
+        v.reg_date = request.form.get('reg_date')
+        v.mfg_date = request.form.get('mfg_date')
         
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         
